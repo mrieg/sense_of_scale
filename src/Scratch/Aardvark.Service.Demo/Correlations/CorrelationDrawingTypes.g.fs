@@ -13,19 +13,19 @@ module Mutable =
     type MStyle(__initial : CorrelationDrawing.Style) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Style> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Style>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Style>
-        let _color = Aardvark.UI.Mutable.MColorInput.Create(__initial.color)
-        let _thickness = Aardvark.UI.Mutable.MNumericInput.Create(__initial.thickness)
+        let _color = ResetMod.Create(__initial.color)
+        let _thickness = ResetMod.Create(__initial.thickness)
         
-        member x.color = _color
-        member x.thickness = _thickness
+        member x.color = _color :> IMod<_>
+        member x.thickness = _thickness :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.Style) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                Aardvark.UI.Mutable.MColorInput.Update(_color, v.color)
-                Aardvark.UI.Mutable.MNumericInput.Update(_thickness, v.thickness)
+                ResetMod.Update(_color,v.color)
+                ResetMod.Update(_thickness,v.thickness)
                 
         
         static member Create(__initial : CorrelationDrawing.Style) : MStyle = MStyle(__initial)
@@ -43,13 +43,13 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let color =
-                { new Lens<CorrelationDrawing.Style, Aardvark.UI.ColorInput>() with
+                { new Lens<CorrelationDrawing.Style, System.Object>() with
                     override x.Get(r) = r.color
                     override x.Set(r,v) = { r with color = v }
                     override x.Update(r,f) = { r with color = f r.color }
                 }
             let thickness =
-                { new Lens<CorrelationDrawing.Style, Aardvark.UI.NumericInput>() with
+                { new Lens<CorrelationDrawing.Style, System.Object>() with
                     override x.Get(r) = r.thickness
                     override x.Set(r,v) = { r with thickness = v }
                     override x.Update(r,f) = { r with thickness = f r.thickness }
@@ -144,13 +144,13 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let label =
-                { new Lens<CorrelationDrawing.Semantic, Microsoft.FSharp.Core.string>() with
+                { new Lens<CorrelationDrawing.Semantic, System.String>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }
                 }
             let size =
-                { new Lens<CorrelationDrawing.Semantic, Microsoft.FSharp.Core.double>() with
+                { new Lens<CorrelationDrawing.Semantic, System.Double>() with
                     override x.Get(r) = r.size
                     override x.Set(r,v) = { r with size = v }
                     override x.Update(r,f) = { r with size = f r.size }
@@ -253,13 +253,13 @@ module Mutable =
                     override x.Update(r,f) = { r with segments = f r.segments }
                 }
             let visible =
-                { new Lens<CorrelationDrawing.Annotation, Microsoft.FSharp.Core.bool>() with
+                { new Lens<CorrelationDrawing.Annotation, System.Boolean>() with
                     override x.Get(r) = r.visible
                     override x.Set(r,v) = { r with visible = v }
                     override x.Update(r,f) = { r with visible = f r.visible }
                 }
             let text =
-                { new Lens<CorrelationDrawing.Annotation, Microsoft.FSharp.Core.string>() with
+                { new Lens<CorrelationDrawing.Annotation, System.String>() with
                     override x.Get(r) = r.text
                     override x.Set(r,v) = { r with text = v }
                     override x.Update(r,f) = { r with text = f r.text }
@@ -336,7 +336,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let id =
-                { new Lens<CorrelationDrawing.LogModel, Microsoft.FSharp.Core.string>() with
+                { new Lens<CorrelationDrawing.LogModel, System.String>() with
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
@@ -406,19 +406,19 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let draw =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.bool>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.Boolean>() with
                     override x.Get(r) = r.draw
                     override x.Set(r,v) = { r with draw = v }
                     override x.Update(r,f) = { r with draw = f r.draw }
                 }
             let hoverPosition =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.option<Aardvark.Base.Trafo3d>>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<Aardvark.Base.Trafo3d>>() with
                     override x.Get(r) = r.hoverPosition
                     override x.Set(r,v) = { r with hoverPosition = v }
                     override x.Update(r,f) = { r with hoverPosition = f r.hoverPosition }
                 }
             let working =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.option<CorrelationDrawing.Annotation>>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<CorrelationDrawing.Annotation>>() with
                     override x.Get(r) = r.working
                     override x.Set(r,v) = { r with working = v }
                     override x.Update(r,f) = { r with working = f r.working }
@@ -436,7 +436,7 @@ module Mutable =
                     override x.Update(r,f) = { r with geometry = f r.geometry }
                 }
             let semantics =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Aardvark.Base.hmap<Microsoft.FSharp.Core.string,CorrelationDrawing.Semantic>>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Aardvark.Base.hmap<System.String,CorrelationDrawing.Semantic>>() with
                     override x.Get(r) = r.semantics
                     override x.Set(r,v) = { r with semantics = v }
                     override x.Update(r,f) = { r with semantics = f r.semantics }
@@ -448,7 +448,7 @@ module Mutable =
                     override x.Update(r,f) = { r with semanticsList = f r.semanticsList }
                 }
             let selectedSemantic =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.option<Microsoft.FSharp.Core.string>>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<System.String>>() with
                     override x.Get(r) = r.selectedSemantic
                     override x.Set(r,v) = { r with selectedSemantic = v }
                     override x.Update(r,f) = { r with selectedSemantic = f r.selectedSemantic }
@@ -460,7 +460,7 @@ module Mutable =
                     override x.Update(r,f) = { r with annotations = f r.annotations }
                 }
             let exportPath =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.string>() with
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.String>() with
                     override x.Get(r) = r.exportPath
                     override x.Set(r,v) = { r with exportPath = v }
                     override x.Update(r,f) = { r with exportPath = f r.exportPath }
@@ -470,13 +470,13 @@ module Mutable =
     type MCorrelationAppModel(__initial : CorrelationDrawing.CorrelationAppModel) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationAppModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationAppModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationAppModel>
-        let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
+        let _camera = ResetMod.Create(__initial.camera)
         let _rendering = MRenderingParameters.Create(__initial.rendering)
         let _drawing = MCorrelationDrawingModel.Create(__initial.drawing)
         let _history = ResetMod.Create(__initial.history)
         let _future = ResetMod.Create(__initial.future)
         
-        member x.camera = _camera
+        member x.camera = _camera :> IMod<_>
         member x.rendering = _rendering
         member x.drawing = _drawing
         member x.history = _history :> IMod<_>
@@ -487,7 +487,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
+                ResetMod.Update(_camera,v.camera)
                 MRenderingParameters.Update(_rendering, v.rendering)
                 MCorrelationDrawingModel.Update(_drawing, v.drawing)
                 _history.Update(v.history)
@@ -509,7 +509,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let camera =
-                { new Lens<CorrelationDrawing.CorrelationAppModel, Aardvark.UI.Primitives.CameraControllerState>() with
+                { new Lens<CorrelationDrawing.CorrelationAppModel, System.Object>() with
                     override x.Get(r) = r.camera
                     override x.Set(r,v) = { r with camera = v }
                     override x.Update(r,f) = { r with camera = f r.camera }

@@ -41,10 +41,11 @@ let view (model : MModel) =
 
     let renderControl =
         CameraController.controlledControl model.cameraState Camera (Frustum.perspective 60.0 0.1 100.0 1.0 |> Mod.constant) 
-                    (AttributeMap.ofList [ style "width: 100%; grid-row: 2"]) 
+                    (AttributeMap.ofList [ style "width: 100%; height: 80%; grid-row: 2"]) 
                     (viewScene model)
 
     body [] [
+        renderControl
         div [style "display: grid; grid-template-rows: 40px 1fr; width: 100%; height: 100%" ] [
             button [
                 onChooseFiles (fun files -> printfn "%A" files; LoadFiles files)

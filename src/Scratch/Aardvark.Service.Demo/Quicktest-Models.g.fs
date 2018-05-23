@@ -58,7 +58,7 @@ module Mutable =
                     override x.Update(r,f) = { r with selected = f r.selected }
                 }
             let newValue =
-                { new Lens<QuickTest.QuickTestModel, Microsoft.FSharp.Core.option<QuickTest.Person>>() with
+                { new Lens<QuickTest.QuickTestModel, Microsoft.FSharp.Core.Option<QuickTest.Person>>() with
                     override x.Get(r) = r.newValue
                     override x.Set(r,v) = { r with newValue = v }
                     override x.Update(r,f) = { r with newValue = f r.newValue }

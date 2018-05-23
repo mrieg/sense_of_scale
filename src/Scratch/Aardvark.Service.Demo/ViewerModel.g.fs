@@ -15,17 +15,17 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<Viewer.ViewerModel> = Aardvark.Base.Incremental.EqModRef<Viewer.ViewerModel>(__initial) :> Aardvark.Base.Incremental.IModRef<Viewer.ViewerModel>
         let _files = ResetMod.Create(__initial.files)
         let _rotation = ResetMod.Create(__initial.rotation)
-        let _scenes = MSet.Create(__initial.scenes)
+        let _scenes = ResetMod.Create(__initial.scenes)
         let _bounds = ResetMod.Create(__initial.bounds)
-        let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
+        let _camera = ResetMod.Create(__initial.camera)
         let _fillMode = ResetMod.Create(__initial.fillMode)
         let _cullMode = ResetMod.Create(__initial.cullMode)
         
         member x.files = _files :> IMod<_>
         member x.rotation = _rotation :> IMod<_>
-        member x.scenes = _scenes :> aset<_>
+        member x.scenes = _scenes :> IMod<_>
         member x.bounds = _bounds :> IMod<_>
-        member x.camera = _camera
+        member x.camera = _camera :> IMod<_>
         member x.fillMode = _fillMode :> IMod<_>
         member x.cullMode = _cullMode :> IMod<_>
         
@@ -36,9 +36,9 @@ module Mutable =
                 
                 ResetMod.Update(_files,v.files)
                 ResetMod.Update(_rotation,v.rotation)
-                MSet.Update(_scenes, v.scenes)
+                ResetMod.Update(_scenes,v.scenes)
                 ResetMod.Update(_bounds,v.bounds)
-                Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
+                ResetMod.Update(_camera,v.camera)
                 ResetMod.Update(_fillMode,v.fillMode)
                 ResetMod.Update(_cullMode,v.cullMode)
                 
@@ -58,19 +58,19 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let files =
-                { new Lens<Viewer.ViewerModel, Microsoft.FSharp.Collections.list<Microsoft.FSharp.Core.string>>() with
+                { new Lens<Viewer.ViewerModel, Microsoft.FSharp.Collections.List<System.String>>() with
                     override x.Get(r) = r.files
                     override x.Set(r,v) = { r with files = v }
                     override x.Update(r,f) = { r with files = f r.files }
                 }
             let rotation =
-                { new Lens<Viewer.ViewerModel, Microsoft.FSharp.Core.float>() with
+                { new Lens<Viewer.ViewerModel, System.Double>() with
                     override x.Get(r) = r.rotation
                     override x.Set(r,v) = { r with rotation = v }
                     override x.Update(r,f) = { r with rotation = f r.rotation }
                 }
             let scenes =
-                { new Lens<Viewer.ViewerModel, Aardvark.Base.hset<Aardvark.UI.ISg<Viewer.Message>>>() with
+                { new Lens<Viewer.ViewerModel, System.Object>() with
                     override x.Get(r) = r.scenes
                     override x.Set(r,v) = { r with scenes = v }
                     override x.Update(r,f) = { r with scenes = f r.scenes }
@@ -82,7 +82,7 @@ module Mutable =
                     override x.Update(r,f) = { r with bounds = f r.bounds }
                 }
             let camera =
-                { new Lens<Viewer.ViewerModel, Aardvark.UI.Primitives.CameraControllerState>() with
+                { new Lens<Viewer.ViewerModel, System.Object>() with
                     override x.Get(r) = r.camera
                     override x.Set(r,v) = { r with camera = v }
                     override x.Update(r,f) = { r with camera = f r.camera }

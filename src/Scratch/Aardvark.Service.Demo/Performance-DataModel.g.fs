@@ -15,11 +15,11 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<Performance.Model> = Aardvark.Base.Incremental.EqModRef<Performance.Model>(__initial) :> Aardvark.Base.Incremental.IModRef<Performance.Model>
         let _visible = MList.Create(__initial.visible)
         let _objects = MList.Create(__initial.objects)
-        let _cameraState = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.cameraState)
+        let _cameraState = ResetMod.Create(__initial.cameraState)
         
         member x.visible = _visible :> alist<_>
         member x.objects = _objects :> alist<_>
-        member x.cameraState = _cameraState
+        member x.cameraState = _cameraState :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Performance.Model) =
@@ -28,7 +28,7 @@ module Mutable =
                 
                 MList.Update(_visible, v.visible)
                 MList.Update(_objects, v.objects)
-                Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_cameraState, v.cameraState)
+                ResetMod.Update(_cameraState,v.cameraState)
                 
         
         static member Create(__initial : Performance.Model) : MModel = MModel(__initial)
@@ -58,7 +58,7 @@ module Mutable =
                     override x.Update(r,f) = { r with objects = f r.objects }
                 }
             let cameraState =
-                { new Lens<Performance.Model, Aardvark.UI.Primitives.CameraControllerState>() with
+                { new Lens<Performance.Model, System.Object>() with
                     override x.Get(r) = r.cameraState
                     override x.Set(r,v) = { r with cameraState = v }
                     override x.Update(r,f) = { r with cameraState = f r.cameraState }

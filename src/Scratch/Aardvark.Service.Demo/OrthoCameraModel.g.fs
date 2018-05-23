@@ -16,16 +16,16 @@ module Mutable =
         type MOrthoModel(__initial : OrthoCamera.OrthoCameraModel.OrthoModel) =
             inherit obj()
             let mutable __current : Aardvark.Base.Incremental.IModRef<OrthoCamera.OrthoCameraModel.OrthoModel> = Aardvark.Base.Incremental.EqModRef<OrthoCamera.OrthoCameraModel.OrthoModel>(__initial) :> Aardvark.Base.Incremental.IModRef<OrthoCamera.OrthoCameraModel.OrthoModel>
-            let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
+            let _camera = ResetMod.Create(__initial.camera)
             
-            member x.camera = _camera
+            member x.camera = _camera :> IMod<_>
             
             member x.Current = __current :> IMod<_>
             member x.Update(v : OrthoCamera.OrthoCameraModel.OrthoModel) =
                 if not (System.Object.ReferenceEquals(__current.Value, v)) then
                     __current.Value <- v
                     
-                    Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
+                    ResetMod.Update(_camera,v.camera)
                     
             
             static member Create(__initial : OrthoCamera.OrthoCameraModel.OrthoModel) : MOrthoModel = MOrthoModel(__initial)
@@ -43,7 +43,7 @@ module Mutable =
             [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
             module Lens =
                 let camera =
-                    { new Lens<OrthoCamera.OrthoCameraModel.OrthoModel, Aardvark.UI.Primitives.CameraControllerState>() with
+                    { new Lens<OrthoCamera.OrthoCameraModel.OrthoModel, System.Object>() with
                         override x.Get(r) = r.camera
                         override x.Set(r,v) = { r with camera = v }
                         override x.Update(r,f) = { r with camera = f r.camera }

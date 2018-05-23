@@ -43,13 +43,13 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let name =
-                { new Lens<LayoutingModel.Tab, Microsoft.FSharp.Core.string>() with
+                { new Lens<LayoutingModel.Tab, System.String>() with
                     override x.Get(r) = r.name
                     override x.Set(r,v) = { r with name = v }
                     override x.Update(r,f) = { r with name = f r.name }
                 }
             let url =
-                { new Lens<LayoutingModel.Tab, Microsoft.FSharp.Core.string>() with
+                { new Lens<LayoutingModel.Tab, System.String>() with
                     override x.Get(r) = r.url
                     override x.Set(r,v) = { r with url = v }
                     override x.Update(r,f) = { r with url = f r.url }
