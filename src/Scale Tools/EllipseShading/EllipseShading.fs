@@ -45,9 +45,15 @@ module Shader =
             let value = d0*d0 + d1*d1 + d2*d2 - d3*d3
 
             let c =
-                if value < 0.0
-                then 0.4*V4d.OIII + 0.6*v.c
+                if value < 0.0 && value > -0.05 * f0.Length * f0.Length * f1.Length * f1.Length
+                then 0.4*V4d.OOII + 0.6*v.c
                 else v.c
+
+            //let d = (v.wp.XYZ - ctr).Length
+            //let c =
+            //    if d < f0.Length && d > f0.Length - 0.05 && d < f1.Length && d > f1.Length - 0.05
+            //    then V4d.OOII
+            //    else v.c
             
             return {v with c = c}
         }
