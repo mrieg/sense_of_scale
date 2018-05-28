@@ -4,6 +4,7 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
+open Aardvark.Rendering.Text
 open Aardvark.UI
 open Aardvark.UI.Trafos
 
@@ -46,7 +47,7 @@ module Shader =
             let value = d0*d0 + d1*d1 + d2*d2 - d3*d3
             let c =
                 if value < 0.0
-                then 0.6*v.c + 0.4*uniform.EllColor
+                then uniform.EllColor
                 else v.c
             
             return {v with c = c}
@@ -185,8 +186,8 @@ module Controls =
             center    = c
             trafo     = trafo
             kind      = TrafoKind.Rotate
-            showTraf  = true
-            showDebug = true
+            showTraf  = false
+            showDebug = false
             colPicker = {ColorPicker.init with c = ell.color.ToC4d().ToC4b()}
         }
     
@@ -249,9 +250,7 @@ module App =
             let ell =
                 match msg with
                 | Controls.Action.TrafoAction ta ->
-                    //let rm = controls.trafo.previewTrafo.Forward.UpperLeftM33()
-                    //let rot = Rot3d.FromM33d(rm)
-                    //let rotation = Trafo3d.Rotation(rot.GetEulerAngles())
+                    //TODO
                     m.ellipse
                 | Controls.Action.ToggleShowTrafo -> m.ellipse
                 | Controls.Action.ChangeKind kind -> m.ellipse
@@ -335,16 +334,98 @@ module App =
             )
             |> Sg.dynamic
         
-        let trafoControls =
-            Controls.viewScene' m.controls view (fun x -> x |> ControlsMsg |> liftMessage)
-            //|> Sg.trafo (
-            //    Mod.map2 (fun (v : CameraView) (t : Trafo3d) ->
-            //        let skyRot = Trafo3d.RotateInto(V3d.OOI, v.Sky)
-            //        let tvec   = t.Forward.C3.XYZ
-            //        let trans  = Trafo3d.Translation(tvec)
-            //        trans.Inverse * skyRot * trans
-            //    ) view m.controls.trafo.previewTrafo
-            //)
+        let trafoControls = Controls.viewScene' m.controls view (fun x -> x |> ControlsMsg |> liftMessage)
+        
+        let axesLines =
+            let lines =
+                adaptive {
+                    let! a = m.ellipse.a
+                    let! b = m.ellipse.b
+
+                    let p00 = -V3d.IOO * 0.5 * a + V3d(0.0, 0.0, 0.01)
+                    let p01 =  V3d.IOO * 0.5 * a + V3d(0.0, 0.0, 0.01)
+                    let l0  =  Line3d(p00, p01)
+
+                    let p10 = -V3d.OIO * 0.5 * b + V3d(0.0, 0.0, 0.01)
+                    let p11 =  V3d.OIO * 0.5 * b + V3d(0.0, 0.0, 0.01)
+                    let l1  =  Line3d(p10, p11)
+                    
+                    return [|l0;l1|]
+                }
+            
+            let col = C4b.White |> Mod.constant
+            Sg.lines col lines
+            |> Sg.noEvents
+            |> Sg.trafo (
+                m.ellipse.rotation
+            )
+            |> Sg.trafo (
+                view
+                |> Mod.map ( fun v ->
+                    Trafo3d.RotateInto(V3d.OOI, v.Sky)
+                )
+            )
+            |> Sg.trafo (
+                m.ellipse.center
+                |> Mod.map ( fun c ->
+                    Trafo3d.Translation(c)
+                )
+            )
+            |> Sg.shader {
+                do! DefaultSurfaces.trafo
+                do! DefaultSurfaces.vertexColor
+            }
+        
+        let axesLabels =
+            let a = m.ellipse.a |> Mod.map (fun x -> sprintf "%.2f" x)
+            let b = m.ellipse.b |> Mod.map (fun x -> sprintf "%.2f" x)
+
+            let transA =
+                adaptive {
+                    let! a = m.ellipse.a
+                    let! c = m.ellipse.center
+                    let! r = m.ellipse.rotation
+                    let! v = view
+
+                    let p = V3d.IOO * a * 0.5
+                    let t = r * Trafo3d.RotateInto(V3d.OOI, v.Sky) * Trafo3d.Translation(c)
+                    let p = p |> t.Forward.TransformPos
+                    let trafo = Trafo3d.Translation(p)
+                    
+                    return trafo
+                }
+
+            let labA =
+                Sg.textWithBackground (Font.create "arial" FontStyle.Regular) C4b.White C4b.Black Border2d.None a
+                |> Sg.billboard
+                |> Sg.noEvents
+                |> Sg.scale 0.2
+                |> Sg.trafo transA
+            
+            let transB =
+                adaptive {
+                    let! b = m.ellipse.b
+                    let! c = m.ellipse.center
+                    let! r = m.ellipse.rotation
+                    let! v = view
+
+                    let p = V3d.OIO * b * 0.5
+                    let t = r * Trafo3d.RotateInto(V3d.OOI, v.Sky) * Trafo3d.Translation(c)
+                    let p = p |> t.Forward.TransformPos
+                    let trafo = Trafo3d.Translation(p)
+                    
+                    return trafo
+                }
+
+            let labB =
+                Sg.textWithBackground (Font.create "arial" FontStyle.Regular) C4b.White C4b.Black Border2d.None b
+                |> Sg.billboard
+                |> Sg.noEvents
+                |> Sg.scale 0.2
+                |> Sg.trafo transB
+            
+            [labA; labB]
+            |> Sg.ofList
         
         m.addMode
         |> Mod.map ( fun x ->
@@ -354,10 +435,12 @@ module App =
         )
         |> Sg.dynamic
         |> Sg.andAlso debugEllipsoid
+        |> Sg.andAlso axesLines
+        |> Sg.andAlso axesLabels
     
     let view' (m : MModel) =
         Html.SemUi.stuffStack [
-            Utils.Html.toggleButton m.addMode "Add" "Cancel" ToggleAddMode
+            Utils.Html.toggleButton m.addMode "Adjust" "Cancel" ToggleAddMode
             Controls.view' m.controls |> UI.map ControlsMsg
         ]
     

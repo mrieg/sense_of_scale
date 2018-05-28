@@ -178,7 +178,7 @@ module App =
         let camPos  = r.Forward.TransformPos( V3d(8.0, 8.0, 6.0) )
         let camView = CameraView.lookAt camPos V3d.OOO sky
         {
-            appType    = AppType.EllipseShading
+            appType    = AppType.None
             boxesApp   = Boxes.App.initial camView patchBB sky
             shadingApp = DistanceShading.App.initial sky
             barsApp    = ScaleBar.MultiApp.initial
