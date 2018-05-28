@@ -18,12 +18,14 @@ module Mutable =
         let _c = ResetMod.Create(__initial.c)
         let _center = ResetMod.Create(__initial.center)
         let _rotation = ResetMod.Create(__initial.rotation)
+        let _color = ResetMod.Create(__initial.color)
         
         member x.a = _a :> IMod<_>
         member x.b = _b :> IMod<_>
         member x.c = _c :> IMod<_>
         member x.center = _center :> IMod<_>
         member x.rotation = _rotation :> IMod<_>
+        member x.color = _color :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : EllipseShading.EllipseModel) =
@@ -35,6 +37,7 @@ module Mutable =
                 ResetMod.Update(_c,v.c)
                 ResetMod.Update(_center,v.center)
                 ResetMod.Update(_rotation,v.rotation)
+                ResetMod.Update(_color,v.color)
                 
         
         static member Create(__initial : EllipseShading.EllipseModel) : MEllipseModel = MEllipseModel(__initial)
@@ -81,6 +84,12 @@ module Mutable =
                     override x.Set(r,v) = { r with rotation = v }
                     override x.Update(r,f) = { r with rotation = f r.rotation }
                 }
+            let color =
+                { new Lens<EllipseShading.EllipseModel, Aardvark.Base.V4d>() with
+                    override x.Get(r) = r.color
+                    override x.Set(r,v) = { r with color = v }
+                    override x.Update(r,f) = { r with color = f r.color }
+                }
     
     
     type MControlsModel(__initial : EllipseShading.ControlsModel) =
@@ -92,6 +101,7 @@ module Mutable =
         let _kind = ResetMod.Create(__initial.kind)
         let _showTraf = ResetMod.Create(__initial.showTraf)
         let _showDebug = ResetMod.Create(__initial.showDebug)
+        let _colPicker = Aardvark.UI.Mutable.MColorInput.Create(__initial.colPicker)
         
         member x.values = _values
         member x.center = _center
@@ -99,6 +109,7 @@ module Mutable =
         member x.kind = _kind :> IMod<_>
         member x.showTraf = _showTraf :> IMod<_>
         member x.showDebug = _showDebug :> IMod<_>
+        member x.colPicker = _colPicker
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : EllipseShading.ControlsModel) =
@@ -111,6 +122,7 @@ module Mutable =
                 ResetMod.Update(_kind,v.kind)
                 ResetMod.Update(_showTraf,v.showTraf)
                 ResetMod.Update(_showDebug,v.showDebug)
+                Aardvark.UI.Mutable.MColorInput.Update(_colPicker, v.colPicker)
                 
         
         static member Create(__initial : EllipseShading.ControlsModel) : MControlsModel = MControlsModel(__initial)
@@ -162,6 +174,12 @@ module Mutable =
                     override x.Get(r) = r.showDebug
                     override x.Set(r,v) = { r with showDebug = v }
                     override x.Update(r,f) = { r with showDebug = f r.showDebug }
+                }
+            let colPicker =
+                { new Lens<EllipseShading.ControlsModel, Aardvark.UI.ColorInput>() with
+                    override x.Get(r) = r.colPicker
+                    override x.Set(r,v) = { r with colPicker = v }
+                    override x.Update(r,f) = { r with colPicker = f r.colPicker }
                 }
     
     

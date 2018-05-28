@@ -17,6 +17,7 @@ module Shader =
         member x.Base1     : V3d  = uniform?Base1
         member x.Base2     : V3d  = uniform?Base2
         member x.InvSkyRot : M33d = uniform?InvSkyRot
+        member x.EllColor  : V4d  = uniform?EllColor
     
     [<ReflectedDefinition>]
     let det33 (m : M33d) =
@@ -43,17 +44,10 @@ module Shader =
             let d3 = m3 |> det33
             
             let value = d0*d0 + d1*d1 + d2*d2 - d3*d3
-
             let c =
-                if value < 0.0 && value > -0.05 * f0.Length * f0.Length * f1.Length * f1.Length
-                then 0.4*V4d.OOII + 0.6*v.c
+                if value < 0.0
+                then 0.6*v.c + 0.4*uniform.EllColor
                 else v.c
-
-            //let d = (v.wp.XYZ - ctr).Length
-            //let c =
-            //    if d < f0.Length && d > f0.Length - 0.05 && d < f1.Length && d > f1.Length - 0.05
-            //    then V4d.OOII
-            //    else v.c
             
             return {v with c = c}
         }
@@ -67,17 +61,19 @@ module Ellipse =
             c        = 1.0
             center   = V3d.OOO
             rotation = Trafo3d.Identity
+            color    = V4d(0.0, 0.0, 1.0, 1.0)
         }
     
-    let setup (values : V3d) (center : V3d) (rotation : Trafo3d) =
+    let setup (values : V3d) (center : V3d) (rotation : Trafo3d) (color : C4b) =
         {
             a        = values.X
             b        = values.Y
             c        = values.Z
             center   = center
             rotation = rotation
+            color    = color.ToC4d().ToV4d()
         }
-
+    
 (*
     
     TODO: correct controls (trafotrls, inputs, setcenter)
@@ -86,10 +82,11 @@ module Ellipse =
 module Controls =
     
     type Action =
-        | ValuesAction of Vector3d.Action
-        | CenterAction of Vector3d.Action
-        | TrafoAction  of TrafoController.Action
-        | ChangeKind   of TrafoKind
+        | ValuesAction     of Vector3d.Action
+        | CenterAction     of Vector3d.Action
+        | TrafoAction      of TrafoController.Action
+        | ChangeKind       of TrafoKind
+        | ColPickerMessage of ColorPicker.Action
         | ToggleShowTrafo
         | ToggleDebug
     
@@ -114,9 +111,10 @@ module Controls =
                 let c     = trafo.pose.position + trafo.workingPose.position
                 {m with trafo = trafo; center = {m.center with value = c; x = {m.center.x with value = c.X}; y = {m.center.y with value = c.Y}; z = {m.center.z with value = c.Z}}}
         
-        | ChangeKind kind -> {m with kind = kind}
-        | ToggleShowTrafo -> {m with showTraf = not m.showTraf}
-        | ToggleDebug     -> {m with showDebug = not m.showDebug}
+        | ChangeKind       kind -> {m with kind = kind}
+        | ColPickerMessage msg  -> {m with colPicker = ColorPicker.update m.colPicker msg}
+        | ToggleShowTrafo       -> {m with showTraf = not m.showTraf}
+        | ToggleDebug           -> {m with showDebug = not m.showDebug}
     
     let viewScene' (m : MControlsModel) (view : IMod<CameraView>) (liftMessage : Action -> 'msg) =
         Mod.map2 ( fun k s ->
@@ -135,10 +133,13 @@ module Controls =
         div [clazz "ui"][
             Html.table [
                 Html.row "Center: " [
-                    Vector3d.view m.center |> UI.map (fun x -> x |> CenterAction)
+                    Vector3d.view m.center |> UI.map CenterAction
                 ]
                 Html.row "Values: " [
-                    Vector3d.view m.values |> UI.map (fun x -> x |> ValuesAction)
+                    Vector3d.view m.values |> UI.map ValuesAction
+                ]
+                Html.row "Color: " [
+                    ColorPicker.view m.colPicker |> UI.map ColPickerMessage
                 ]
                 Html.row "Show Trafocontrols: " [
                     Utils.Html.toggleButton m.showTraf "Show" "Hide" ToggleShowTrafo
@@ -186,6 +187,7 @@ module Controls =
             kind      = TrafoKind.Rotate
             showTraf  = true
             showDebug = true
+            colPicker = {ColorPicker.init with c = ell.color.ToC4d().ToC4b()}
         }
     
 module App =
@@ -232,8 +234,8 @@ module App =
                         
                         let r = Trafo3d.RotateInto(V3d.IOO, (p1 - p0).Normalized)
                         
-                        let ell = {a = a; b = b; c = c; center = ctr; rotation = r}
-                        let controls = Controls.initial ell view.Sky
+                        let ell = {a = a; b = b; c = c; center = ctr; rotation = r; color = m.ellipse.color}
+                        let controls = {Controls.initial ell view.Sky with colPicker = m.controls.colPicker}
                         {m with pickPoints = pickPoints; ellipse = ell; controls = controls; addMode = false}
                     else
                         {m with pickPoints = pickPoints}
@@ -254,13 +256,13 @@ module App =
                 | Controls.Action.ToggleShowTrafo -> m.ellipse
                 | Controls.Action.ChangeKind kind -> m.ellipse
                 | _ ->
-                    Ellipse.setup controls.values.value controls.center.value m.ellipse.rotation
+                    Ellipse.setup controls.values.value controls.center.value m.ellipse.rotation controls.colPicker.c
 
             {m with controls = controls; ellipse = ell}
         
         | SetCenter (ctr, view) ->
-            let ell = {m.ellipse with center = ctr}
-            let controls = {Controls.initial ell view.Sky with showDebug = m.controls.showDebug; showTraf = m.controls.showTraf}
+            let ell = {m.ellipse with center = ctr; color = m.ellipse.color}
+            let controls = {Controls.initial ell view.Sky with showDebug = m.controls.showDebug; showTraf = m.controls.showTraf; colPicker = m.controls.colPicker}
             {m with ellipse = ell; controls = controls}
         
         | ToggleAddMode -> {m with addMode = not m.addMode; pickPoints = Utils.Picking.initial}
@@ -285,6 +287,7 @@ module App =
         |> Sg.uniform "Base1"     base1
         |> Sg.uniform "Base2"     base2
         |> Sg.uniform "InvSkyRot" invSkyRot
+        |> Sg.uniform "EllColor"  m.ellipse.color
         |> Sg.effect efx
     
     let viewScene' (m : MModel) (view : IMod<CameraView>) (pickSg) (liftMessage : Action -> 'msg) =

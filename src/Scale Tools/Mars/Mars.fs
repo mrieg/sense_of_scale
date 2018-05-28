@@ -5,7 +5,6 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.UI
-
 open Aardvark.SceneGraph.Opc
 
 module Shader =
@@ -57,8 +56,7 @@ module Terrain =
         let bb = scene.boundingBox
         Trafo3d.Translation(-bb.Center) * scene.preTransform
 
-    //let up = scene.boundingBox.Center.Normalized
-    let up = V3d.OOI
+    let up = scene.boundingBox.Center.Normalized
 
     //let mkISg() =
     //    Sg2.createFlatISg pickle unpickle patchHierarchies
@@ -68,14 +66,14 @@ module Terrain =
         Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
         |> Sg.box' C4b.DarkBlue
         |> Sg.noEvents
-        
+        |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
+    
     //let defaultEffects =
     //    [
     //        DefaultSurfaces.trafo                   |> toEffect
     //        DefaultSurfaces.constantColor C4f.White |> toEffect
     //        DefaultSurfaces.diffuseTexture          |> toEffect
     //    ]
-
     let defaultEffects =
         [
             DefaultSurfaces.trafo                   |> toEffect

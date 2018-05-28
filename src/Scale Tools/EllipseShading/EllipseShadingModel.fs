@@ -13,6 +13,7 @@ type EllipseModel =
         c        : float
         center   : V3d
         rotation : Trafo3d
+        color    : V4d
     }
 
 [<DomainType>]
@@ -24,6 +25,7 @@ type ControlsModel =
         kind      : TrafoKind
         showTraf  : bool
         showDebug : bool
+        colPicker : ColorInput
     }
 
 [<DomainType>]
