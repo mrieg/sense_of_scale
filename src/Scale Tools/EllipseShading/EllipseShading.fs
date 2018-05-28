@@ -379,7 +379,7 @@ module App =
         let axesLabels =
             let a = m.ellipse.a |> Mod.map (fun x -> sprintf "%.2f" x)
             let b = m.ellipse.b |> Mod.map (fun x -> sprintf "%.2f" x)
-
+            
             let transA =
                 adaptive {
                     let! a = m.ellipse.a
@@ -390,16 +390,18 @@ module App =
                     let p = V3d.IOO * a * 0.5
                     let t = r * Trafo3d.RotateInto(V3d.OOI, v.Sky) * Trafo3d.Translation(c)
                     let p = p |> t.Forward.TransformPos
-                    let trafo = Trafo3d.Translation(p)
+
+                    let d = V3d.Distance(p, v.Location)
+                    let s = Trafo3d.Scale(0.025 * d)
+                    let trafo = s * Trafo3d.Translation(p)
                     
                     return trafo
                 }
-
+            
             let labA =
-                Sg.textWithBackground (Font.create "arial" FontStyle.Regular) C4b.White C4b.Black Border2d.None a
+                Sg.text (Font.create "arial" FontStyle.Regular) C4b.White a
                 |> Sg.billboard
                 |> Sg.noEvents
-                |> Sg.scale 0.2
                 |> Sg.trafo transA
             
             let transB =
@@ -412,16 +414,18 @@ module App =
                     let p = V3d.OIO * b * 0.5
                     let t = r * Trafo3d.RotateInto(V3d.OOI, v.Sky) * Trafo3d.Translation(c)
                     let p = p |> t.Forward.TransformPos
-                    let trafo = Trafo3d.Translation(p)
+                    
+                    let d = V3d.Distance(p, v.Location)
+                    let s = Trafo3d.Scale(0.025 * d)
+                    let trafo = s * Trafo3d.Translation(p)
                     
                     return trafo
                 }
-
+            
             let labB =
-                Sg.textWithBackground (Font.create "arial" FontStyle.Regular) C4b.White C4b.Black Border2d.None b
+                Sg.text (Font.create "arial" FontStyle.Regular) C4b.White b
                 |> Sg.billboard
                 |> Sg.noEvents
-                |> Sg.scale 0.2
                 |> Sg.trafo transB
             
             [labA; labB]
