@@ -78,7 +78,8 @@ module Ellipse =
 (*
     
     TODO: correct controls (trafotrls, inputs, setcenter)
-    
+    TODO: precision
+
 *)
 module Controls =
     
