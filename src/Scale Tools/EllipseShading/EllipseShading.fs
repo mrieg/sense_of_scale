@@ -47,7 +47,7 @@ module Shader =
             let value = d0*d0 + d1*d1 + d2*d2 - d3*d3
             let c =
                 if value < 0.0
-                then uniform.EllColor
+                then 0.6 * uniform.EllColor + 0.4 * v.c
                 else v.c
             
             return {v with c = c}
@@ -143,9 +143,9 @@ module Controls =
                 Html.row "Color: " [
                     ColorPicker.view m.colPicker |> UI.map ColPickerMessage
                 ]
-                Html.row "Show Trafocontrols: " [
-                    Utils.Html.toggleButton m.showTraf "Show" "Hide" ToggleShowTrafo
-                ]
+                //Html.row "Show Trafocontrols: " [
+                //    Utils.Html.toggleButton m.showTraf "Show" "Hide" ToggleShowTrafo
+                //]
                 Html.row "Debug Ellipsoid: " [
                     Utils.Html.toggleButton m.showDebug "Show" "Hide" ToggleDebug
                 ]
@@ -154,7 +154,7 @@ module Controls =
                 ]
             ]
         ]
-
+    
     let initial (ell : EllipseModel) (sky : V3d) =
         let values = V3d(ell.a, ell.b, ell.c) |> Vector3d.initV3d
         let v =

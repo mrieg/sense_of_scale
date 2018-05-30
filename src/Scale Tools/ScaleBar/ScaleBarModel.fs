@@ -3,7 +3,6 @@ namespace ScaleBar
 open Aardvark.Base
 open Aardvark.Base.Rendering
 open Aardvark.Base.Incremental
-open Aardvark.SceneGraph
 open Aardvark.UI
 open Aardvark.UI.Primitives
 
@@ -22,9 +21,10 @@ type ScaleBarModel =
 [<DomainType>]
 type Model =
     {
-        scaleBar     : ScaleBarModel
-        height       : NumericInput
-        horizontal   : bool
+        scaleBar   : ScaleBarModel
+        height     : NumericInput
+        horizontal : bool
+        stepped    : bool
     }
 
 [<DomainType>]

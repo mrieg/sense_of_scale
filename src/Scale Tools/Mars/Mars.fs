@@ -6,6 +6,7 @@ open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.UI
 open Aardvark.SceneGraph.Opc
+open MBrace.FsPickler
 
 module Shader =
     
@@ -23,9 +24,20 @@ module Shader =
 
 module Terrain =
     
+    let pickler = FsPickler.CreateBinarySerializer()
+    let pickle = pickler.Pickle<QTree<Patch>>
+    let unpickle = pickler.UnPickle<QTree<Patch>>
+    
     let patchHierarchies =
         System.IO.Directory.GetDirectories(@"..\..\data\mars")
         |> Seq.collect System.IO.Directory.GetDirectories
+    
+    let pHs =
+        [ 
+            for h in patchHierarchies do
+                //let p = Path.combine [h; @"Patches\patchhierarchy.xml" ]
+                yield PatchHierarchy.load pickle unpickle h
+        ]
     
     type OPCScene =
         {
@@ -55,31 +67,35 @@ module Terrain =
     let preTransform =
         let bb = scene.boundingBox
         Trafo3d.Translation(-bb.Center) * scene.preTransform
-
+    
     let up = scene.boundingBox.Center.Normalized
 
-    //let mkISg() =
-    //    Sg2.createFlatISg pickle unpickle patchHierarchies
-    //    |> Sg.noEvents
-    //    |> Sg.transform preTransform
     let mkISg() =
-        Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
-        |> Sg.box' C4b.DarkBlue
+        Sg2.createFlatISg pickle unpickle patchHierarchies
         |> Sg.noEvents
-        |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
+        |> Sg.transform preTransform
     
-    //let defaultEffects =
-    //    [
-    //        DefaultSurfaces.trafo                   |> toEffect
-    //        DefaultSurfaces.constantColor C4f.White |> toEffect
-    //        DefaultSurfaces.diffuseTexture          |> toEffect
-    //    ]
+    //plane sg
+    //let mkISg() =
+    //    Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
+    //    |> Sg.box' C4b.DarkBlue
+    //    |> Sg.noEvents
+    //    |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
+    
     let defaultEffects =
         [
             DefaultSurfaces.trafo                   |> toEffect
             DefaultSurfaces.constantColor C4f.White |> toEffect
-            DefaultSurfaces.simpleLighting          |> toEffect
+            DefaultSurfaces.diffuseTexture          |> toEffect
         ]
+
+    //plane default effects
+    //let defaultEffects =
+    //    [
+    //        DefaultSurfaces.trafo                   |> toEffect
+    //        DefaultSurfaces.constantColor C4f.White |> toEffect
+    //        DefaultSurfaces.simpleLighting          |> toEffect
+    //    ]
     
     let simpleLightingEffects =
         let col = C4f(V4d(0.8, 0.5, 0.5, 1.0))
@@ -93,10 +109,11 @@ module Terrain =
     let mutable min     = V3d.III * 50000000.0
     let mutable max     = -V3d.III * 50000000.0
 
-    //let mutable totalBB = Box3d.Unit
-    let mutable totalBB = scene.boundingBox
+    let mutable totalBB = Box3d.Unit.Translated(scene.boundingBox.Center)
+    //plane bb
+    //let mutable totalBB = scene.boundingBox
 
-    let patchBB = totalBB.Translated(-scene.boundingBox.Center)
+    let patchBB() = totalBB.Translated(-scene.boundingBox.Center)
     
     let buildKDTree (g : IndexedGeometry) (local2global : Trafo3d) =
         let pos = g.IndexedAttributes.[DefaultSemantic.Positions] |> unbox<V3f[]>
@@ -143,54 +160,48 @@ module Terrain =
         let tree = Geometry.KdTree.build Geometry.Spatial.triangle (Geometry.KdBuildInfo(100, 5)) triangles
         tree
     
-    //let patchHierarchies =
-    //    [ 
-    //        for h in patchHierarchies do
-    //            let p = Path.combine [h; @"Patches\patchhierarchy.xml" ]
-    //            yield PatchHierarchy.load p
-    //    ]
-    //
-    //let leaves =
-    //    patchHierarchies 
-    //    |> List.collect(fun x ->  
-    //        x.tree |> QTree.getLeaves |> Seq.toList |> List.map(fun y -> (x.baseDir, y)))
-    //
-    //let kdTrees =
-    //    leaves
-    //    |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
-    //    |> List.map(fun ((a,_),c,d) -> (a,c,d))
-    //    |> List.map ( fun (g,dir,info) ->
-    //        buildKDTree g info.Local2Global
-    //    )
-    //
-    //let pickSg events =
-    //    leaves
-    //    |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
-    //    |> List.map(fun ((a,_),c,d) -> (a,c,d))
-    //    |> List.map2 ( fun t (g,dir,info) ->
-    //        let pckShp = t |> PickShape.Triangles
-    //        Sg.ofIndexedGeometry g
-    //        |> Sg.pickable pckShp
-    //        |> Sg.trafo (Mod.constant info.Local2Global)
-    //    ) kdTrees
-    //    |> Sg.ofList
-    //    |> Sg.requirePicking
-    //    |> Sg.noEvents
-    //    |> Sg.withEvents events
-    //    |> Sg.transform preTransform
-    //    |> Sg.shader {
-    //        do! DefaultSurfaces.trafo
-    //        do! DefaultSurfaces.constantColor C4f.DarkRed
-    //    }
-    //    |> Sg.depthTest (Mod.constant DepthTestMode.Never)
-
+    let leaves =
+        pHs
+        |> List.collect(fun x ->
+            x.tree |> QTree.getLeaves |> Seq.toList |> List.map(fun y -> (x.baseDir, y)))
+    
+    let kdTrees =
+        leaves
+        |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
+        |> List.map(fun ((a,_),c,d) -> (a,c,d))
+        |> List.map ( fun (g,dir,info) ->
+            buildKDTree g info.Local2Global
+        )
+    
     let pickSg events =
-        mkISg()
+        leaves
+        |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
+        |> List.map(fun ((a,_),c,d) -> (a,c,d))
+        |> List.map2 ( fun t (g,dir,info) ->
+            let pckShp = t |> PickShape.Triangles
+            Sg.ofIndexedGeometry g
+            |> Sg.pickable pckShp
+            |> Sg.trafo (Mod.constant info.Local2Global)
+        ) kdTrees
+        |> Sg.ofList
         |> Sg.requirePicking
         |> Sg.noEvents
         |> Sg.withEvents events
+        |> Sg.transform preTransform
         |> Sg.shader {
             do! DefaultSurfaces.trafo
             do! DefaultSurfaces.constantColor C4f.DarkRed
         }
         |> Sg.depthTest (Mod.constant DepthTestMode.Never)
+    
+    //plane picking
+    //let pickSg events =
+    //    mkISg()
+    //    |> Sg.requirePicking
+    //    |> Sg.noEvents
+    //    |> Sg.withEvents events
+    //    |> Sg.shader {
+    //        do! DefaultSurfaces.trafo
+    //        do! DefaultSurfaces.constantColor C4f.DarkRed
+    //    }
+    //    |> Sg.depthTest (Mod.constant DepthTestMode.Never)

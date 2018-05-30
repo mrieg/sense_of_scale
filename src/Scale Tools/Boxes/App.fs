@@ -210,11 +210,11 @@ module App =
 
     let app =
         {
-            unpersist   = Unpersist.instance
-            threads     = threads
-            initial     = initial (CameraView.look V3d.OOO -V3d.OIO Mars.Terrain.up) Box3d.Unit V3d.OOI
-            update      = update
-            view        = view
+            unpersist = Unpersist.instance
+            threads   = threads
+            initial   = initial (CameraView.look V3d.OOO -V3d.OIO Mars.Terrain.up) (Mars.Terrain.patchBB()) V3d.OOI
+            update    = update
+            view      = view
         }
     
     let start() = App.start app

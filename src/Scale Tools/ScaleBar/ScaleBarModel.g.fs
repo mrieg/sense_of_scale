@@ -87,10 +87,12 @@ module Mutable =
         let _scaleBar = MScaleBarModel.Create(__initial.scaleBar)
         let _height = Aardvark.UI.Mutable.MNumericInput.Create(__initial.height)
         let _horizontal = ResetMod.Create(__initial.horizontal)
+        let _stepped = ResetMod.Create(__initial.stepped)
         
         member x.scaleBar = _scaleBar
         member x.height = _height
         member x.horizontal = _horizontal :> IMod<_>
+        member x.stepped = _stepped :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : ScaleBar.Model) =
@@ -100,6 +102,7 @@ module Mutable =
                 MScaleBarModel.Update(_scaleBar, v.scaleBar)
                 Aardvark.UI.Mutable.MNumericInput.Update(_height, v.height)
                 ResetMod.Update(_horizontal,v.horizontal)
+                ResetMod.Update(_stepped,v.stepped)
                 
         
         static member Create(__initial : ScaleBar.Model) : MModel = MModel(__initial)
@@ -133,6 +136,12 @@ module Mutable =
                     override x.Get(r) = r.horizontal
                     override x.Set(r,v) = { r with horizontal = v }
                     override x.Update(r,f) = { r with horizontal = f r.horizontal }
+                }
+            let stepped =
+                { new Lens<ScaleBar.Model, System.Boolean>() with
+                    override x.Get(r) = r.stepped
+                    override x.Set(r,v) = { r with stepped = v }
+                    override x.Update(r,f) = { r with stepped = f r.stepped }
                 }
     
     

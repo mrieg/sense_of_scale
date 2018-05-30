@@ -14,6 +14,7 @@ module App =
     type Action =
         | HeightMessage of Numeric.Action
         | ToggleHorizontal
+        | ToggleStepped
         | SetPos of V3d
     
     let update (m : Model) (act : Action) =
@@ -26,55 +27,62 @@ module App =
             | _ -> m
         
         | ToggleHorizontal -> {m with horizontal = not m.horizontal}
-        | SetPos pos -> {m with scaleBar = {m.scaleBar with pos = pos}}
+        | ToggleStepped    -> {m with stepped = not m.stepped}
+        | SetPos pos       -> {m with scaleBar = {m.scaleBar with pos = pos}}
     
     let viewScene (m : MModel) (view : IMod<CameraView>) =
-        m.horizontal
-        |> Mod.map ( fun h ->
-            if h
-            then ScaleBar.drawBarHorizontal m.scaleBar view
-            else ScaleBar.drawBarVertical m.scaleBar view
-        )
+        Mod.map2 ( fun stepped horiz ->
+            if stepped
+            then
+                if horiz
+                then ScaleBar.drawBarHorizontalStepped m.scaleBar view
+                else ScaleBar.drawBarVerticalStepped m.scaleBar view
+            else
+                if horiz
+                then ScaleBar.drawBarHorizontal m.scaleBar view
+                else ScaleBar.drawBarVertical m.scaleBar view
+        ) m.stepped m.horizontal
         |> Sg.dynamic
     
     let viewScene' (m : MModel) (view : IMod<CameraView>) pickSg (liftMessage : Action -> 'msg) =
-        m.horizontal
-        |> Mod.map ( fun h ->
-            if h
-            then ScaleBar.drawBarHorizontal m.scaleBar view
-            else ScaleBar.drawBarVertical m.scaleBar view
-        )
-        |> Sg.dynamic
+        viewScene m view
         |> Sg.andAlso (
             pickSg [Sg.onDoubleClick ( fun v -> v |> SetPos |> liftMessage )]
         )
     
     let view' (m : MModel) =
         div [clazz "ui"][
-            Html.table [
-                Html.row "Height : " [
-                    Numeric.view m.height |> UI.map HeightMessage
-                ]
-                Html.row "Vert/Hori: " [
-                    Html.SemUi.toggleBox m.horizontal ToggleHorizontal
-                ]
-            ]
+            Incremental.table
+                (AttributeMap.ofList[
+                    style "color:#ffffff"
+                ])
+                    (
+                        alist {
+                            let! stepped = m.stepped
+                            if not stepped
+                            then yield Html.row "Height: " [Numeric.view m.height |> UI.map HeightMessage]
+                            yield Html.row "Vert/Hori: " [Utils.Html.toggleButton m.horizontal "Horizontal" "Vertical" ToggleHorizontal]
+                            yield Html.row "Stepped: " [Utils.Html.toggleButton m.stepped "Stepped" "Fixed" ToggleStepped]
+                        }
+                    )
         ]
     
     let initial =
         let scaleBar = ScaleBar.initial
         let h        = scaleBar.height
         {
-            scaleBar     = scaleBar
-            height       = {Numeric.init with min = 1.0; max = 50.0; step = 1.0; value = h}
-            horizontal   = false
+            scaleBar   = scaleBar
+            height     = {Numeric.init with min = 1.0; max = 50.0; step = 1.0; value = h}
+            horizontal = false
+            stepped    = false
         }
     
     let setup pos height =
         let scaleBar = ScaleBar.setup pos height
         let h        = scaleBar.height
         {
-            scaleBar     = scaleBar
-            height       = {Numeric.init with min = 1.0; max = 50.0; step = 1.0; value = h}
-            horizontal   = false
+            scaleBar   = scaleBar
+            height     = {Numeric.init with min = 1.0; max = 50.0; step = 1.0; value = h}
+            horizontal = false
+            stepped    = false
         }

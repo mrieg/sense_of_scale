@@ -66,7 +66,7 @@ module App =
     let shadingEffects = Mars.Terrain.simpleLightingEffects
     let pickSg = Mars.Terrain.pickSg
     let sky = Mars.Terrain.up
-    let patchBB = Mars.Terrain.patchBB
+    let patchBB = Mars.Terrain.patchBB()
     
     let viewScene (m : MModel) =
         let currentScene =
@@ -159,6 +159,8 @@ module App =
                 div [clazz "ui"][
                     CameraController.controlledControl m.camera CameraMessage frustum
                         (AttributeMap.ofList[
+                            //8x Antialiasing
+                            attribute "data-samples" "8"
                             onKeyDown OnKeyDownMsg
                             style "background:#121212; width:100%; height:100%;"
                         ]) (viewScene m)
