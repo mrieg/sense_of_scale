@@ -30,7 +30,7 @@ module ScaleBar =
             )
     
     let scaleFactor = 0.019
-    let sMin = 0.05
+    let sMin = 0.005
     let drawLabelsHorizontal (m : MScaleBarModel) (view : IMod<CameraView>) =
         let font = Font.create "arial" FontStyle.Regular
         let spaceToBar =
@@ -142,7 +142,19 @@ module ScaleBar =
         Mod.map2 ( fun (p : V3d) (v : CameraView) ->
             let l = v.Location
             let d = V3d.Distance(p, l)
-            if d < 20.0 then 1.0 else 10.0
+            if d < 0.4
+            then 0.1
+            else if d < 2.0
+            then 0.5
+            else if d < 10.0
+            then 1.0
+            else if d < 25.0
+            then 5.0
+            else if d < 60.0
+            then 10.0
+            else if d < 120.0
+            then 25.0
+            else 50.0
         ) pos view
     
     let drawLabelsHorizontalStepped (m : MScaleBarModel) (view : IMod<CameraView>) =
