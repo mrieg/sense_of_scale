@@ -47,7 +47,7 @@ module Shader =
             let value = d0*d0 + d1*d1 + d2*d2 - d3*d3
             let c =
                 if value < 0.0
-                then 0.6 * uniform.EllColor + 0.4 * v.c
+                then 0.5*uniform.EllColor + 0.5*v.c
                 else v.c
             
             return {v with c = c}
