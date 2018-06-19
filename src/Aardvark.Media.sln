@@ -76,6 +76,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scaletools", "scaletools", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Scale Tools", "Scale Tools\Scale Tools.fsproj", "{9B93BA18-40B6-4CD4-9C6D-8D06BD8CFC5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aardvark.Fitting.Planes", "Aardvark.Fitting.Planes\Aardvark.Fitting.Planes.csproj", "{F59829FB-42DA-4093-AF1B-30D671943136}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -186,6 +188,10 @@ Global
 		{9B93BA18-40B6-4CD4-9C6D-8D06BD8CFC5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B93BA18-40B6-4CD4-9C6D-8D06BD8CFC5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B93BA18-40B6-4CD4-9C6D-8D06BD8CFC5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F59829FB-42DA-4093-AF1B-30D671943136}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F59829FB-42DA-4093-AF1B-30D671943136}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F59829FB-42DA-4093-AF1B-30D671943136}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F59829FB-42DA-4093-AF1B-30D671943136}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -217,6 +223,7 @@ Global
 		{043DC49E-6833-41FA-AD93-45A49046AE05} = {DAC89FC7-17D3-467D-929D-781A88DA5324}
 		{2F067EBB-A2A1-4267-8F9A-29551E3D10C3} = {6886C4F9-BA04-4E56-8687-672B6A9822DF}
 		{9B93BA18-40B6-4CD4-9C6D-8D06BD8CFC5E} = {B765F460-EAAD-42A8-98EF-17EED1096751}
+		{F59829FB-42DA-4093-AF1B-30D671943136} = {B765F460-EAAD-42A8-98EF-17EED1096751}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B7FCCF28-D562-4E8F-86A7-2310B38A1016}

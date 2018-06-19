@@ -26,7 +26,7 @@ module App =
         | ToggleShading
     
     let cameraShouldUpdate (m : Model) =
-        (Boxes.App.cameraShouldUpdate m.boxesApp) && not (KnownObject.Multi.trafoGrabbed m.objectsApp) && not (EllipseShading.App.trafoGrabbed m.ellipseApp)
+        (Boxes.App.cameraShouldUpdate m.boxesApp) && not (KnownObject.Multi.trafoGrabbed m.objectsApp) && not (EllipseShading.App.trafoGrabbed m.ellipseApp) && not (PlaneExtrude.App.trafoGrabbed m.planeExApp)
     
     let update (m : Model) (act : Action) =
         match act with
@@ -59,6 +59,9 @@ module App =
                 | AppType.ScaleBars ->
                     let msg = key |> ScaleBar.MultiApp.Action.OnKeyDown
                     {m with barsApp = ScaleBar.MultiApp.update m.barsApp msg}
+                | AppType.PlaneExtrude ->
+                    let msg = key |> PlaneExtrude.App.Action.OnKeyDown
+                    {m with planeExApp = PlaneExtrude.App.update m.planeExApp msg}
                 | _ -> m
     
     let terrainSg() = Mars.Terrain.mkISg()

@@ -2,6 +2,7 @@ namespace PlaneExtrude
 
 open Aardvark.Base
 open Aardvark.Base.Incremental
+open Aardvark.UI.Trafos
 
 [<DomainType>]
 type PlaneModel =
@@ -11,18 +12,21 @@ type PlaneModel =
         v2    : V3d
         v3    : V3d
         color : C4b
-        
+
         [<NonIncremental>]
         id : string
     }
-
+    
 [<DomainType>]
 type Model =
     {
         addMode     : bool
+        extrudeMode : bool
         pointsModel : Utils.PickPointsModel
-        planeModel  : PlaneModel
-        
+        planeModels  : plist<PlaneModel>
+        selected    : option<string>
+        trafo : Transformation
+
         [<NonIncremental>]
         id : string
     }

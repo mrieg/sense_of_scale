@@ -94,12 +94,18 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<PlaneExtrude.Model> = Aardvark.Base.Incremental.EqModRef<PlaneExtrude.Model>(__initial) :> Aardvark.Base.Incremental.IModRef<PlaneExtrude.Model>
         let _addMode = ResetMod.Create(__initial.addMode)
+        let _extrudeMode = ResetMod.Create(__initial.extrudeMode)
         let _pointsModel = Utils.Mutable.MPickPointsModel.Create(__initial.pointsModel)
-        let _planeModel = MPlaneModel.Create(__initial.planeModel)
+        let _planeModels = MList.Create(__initial.planeModels, (fun v -> MPlaneModel.Create(v)), (fun (m,v) -> MPlaneModel.Update(m, v)), (fun v -> v))
+        let _selected = MOption.Create(__initial.selected)
+        let _trafo = Aardvark.UI.Trafos.Mutable.MTransformation.Create(__initial.trafo)
         
         member x.addMode = _addMode :> IMod<_>
+        member x.extrudeMode = _extrudeMode :> IMod<_>
         member x.pointsModel = _pointsModel
-        member x.planeModel = _planeModel
+        member x.planeModels = _planeModels :> alist<_>
+        member x.selected = _selected :> IMod<_>
+        member x.trafo = _trafo
         member x.id = __current.Value.id
         
         member x.Current = __current :> IMod<_>
@@ -108,8 +114,11 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_addMode,v.addMode)
+                ResetMod.Update(_extrudeMode,v.extrudeMode)
                 Utils.Mutable.MPickPointsModel.Update(_pointsModel, v.pointsModel)
-                MPlaneModel.Update(_planeModel, v.planeModel)
+                MList.Update(_planeModels, v.planeModels)
+                MOption.Update(_selected, v.selected)
+                Aardvark.UI.Trafos.Mutable.MTransformation.Update(_trafo, v.trafo)
                 
         
         static member Create(__initial : PlaneExtrude.Model) : MModel = MModel(__initial)
@@ -132,17 +141,35 @@ module Mutable =
                     override x.Set(r,v) = { r with addMode = v }
                     override x.Update(r,f) = { r with addMode = f r.addMode }
                 }
+            let extrudeMode =
+                { new Lens<PlaneExtrude.Model, System.Boolean>() with
+                    override x.Get(r) = r.extrudeMode
+                    override x.Set(r,v) = { r with extrudeMode = v }
+                    override x.Update(r,f) = { r with extrudeMode = f r.extrudeMode }
+                }
             let pointsModel =
                 { new Lens<PlaneExtrude.Model, Utils.PickPointsModel>() with
                     override x.Get(r) = r.pointsModel
                     override x.Set(r,v) = { r with pointsModel = v }
                     override x.Update(r,f) = { r with pointsModel = f r.pointsModel }
                 }
-            let planeModel =
-                { new Lens<PlaneExtrude.Model, PlaneExtrude.PlaneModel>() with
-                    override x.Get(r) = r.planeModel
-                    override x.Set(r,v) = { r with planeModel = v }
-                    override x.Update(r,f) = { r with planeModel = f r.planeModel }
+            let planeModels =
+                { new Lens<PlaneExtrude.Model, Aardvark.Base.plist<PlaneExtrude.PlaneModel>>() with
+                    override x.Get(r) = r.planeModels
+                    override x.Set(r,v) = { r with planeModels = v }
+                    override x.Update(r,f) = { r with planeModels = f r.planeModels }
+                }
+            let selected =
+                { new Lens<PlaneExtrude.Model, Microsoft.FSharp.Core.Option<System.String>>() with
+                    override x.Get(r) = r.selected
+                    override x.Set(r,v) = { r with selected = v }
+                    override x.Update(r,f) = { r with selected = f r.selected }
+                }
+            let trafo =
+                { new Lens<PlaneExtrude.Model, Aardvark.UI.Trafos.Transformation>() with
+                    override x.Get(r) = r.trafo
+                    override x.Set(r,v) = { r with trafo = v }
+                    override x.Update(r,f) = { r with trafo = f r.trafo }
                 }
             let id =
                 { new Lens<PlaneExtrude.Model, System.String>() with

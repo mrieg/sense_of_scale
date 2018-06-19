@@ -1,0 +1,5 @@
+type project
+id Aardvark.Fitting.Planes
+authors Aardvark Platform Team
+description
+    Fitting planes to points.
