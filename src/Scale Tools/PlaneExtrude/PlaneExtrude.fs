@@ -47,11 +47,14 @@ module Plane =
             do! DefaultSurfaces.vertexColor
         }
     
+    let center (m : PlaneModel) =
+        (m.v0 + m.v1 + m.v2 + m.v3) * 0.25
+
     let mkTrafo (m : PlaneModel) =
         let normal = V3d.Cross(m.v1 - m.v0, m.v2 - m.v0).Normalized
-        let center = (m.v0 + m.v1 + m.v2 + m.v3) * 0.25
+        let c = m |> center
         let rot = Rot3d.FromM33d(Trafo3d.RotateInto(V3d.OOI, normal).Forward.UpperLeftM33())
-        let pose = {Pose.translate center with rotation = rot}
+        let pose = {Pose.translate c with rotation = rot}
         {TrafoController.initial with pose = pose; previewTrafo = Pose.toTrafo pose; mode = TrafoMode.Local}
     
     let setup v0 v1 v2 v3 color =
@@ -87,6 +90,8 @@ module App =
         | FinishPoints
         | ToggleAddMode
         | ToggleExtrudeMode
+        | AddPlane
+        | RemovePlane
         | TranslateCtrlMsg of TrafoController.Action
         | OnKeyDown of Aardvark.Application.Keys
     
@@ -116,11 +121,55 @@ module App =
             if m.addMode
             then m
             else {m with extrudeMode = not m.extrudeMode}
-        | TranslateCtrlMsg msg -> {m with trafo = TranslateController.updateController m.trafo msg}
+        
+        | AddPlane ->
+            match m.selected with
+            | Some id ->
+                let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
+                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 C4b.Red
+                let trafo = m.trafo
+                let planeModels = m.planeModels |> PList.append newPlane
+                {m with planeModels = planeModels; selected = Some newPlane.id; trafo = trafo}
+            | None ->
+                m
+        | RemovePlane ->
+            match m.selected with
+            | Some id ->
+                let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
+                let planeModels =
+                    m.planeModels
+                    |> PList.toList
+                    |> List.except [p]
+                    |> PList.ofList
+                {m with planeModels = planeModels; selected = None}
+            | None ->
+                m
+
+        | TranslateCtrlMsg msg ->
+            match m.selected with
+            | Some id ->
+                let planeModels =
+                    m.planeModels
+                    |> PList.map (fun x ->
+                        match x.id = id with
+                        | true  ->
+                            let pc = x |> Plane.center
+                            let tc = m.trafo.pose.position + ((m.trafo.pose |> Pose.toRotTrafo).Forward.TransformPos(m.trafo.workingPose.position))
+                            let t = tc - pc
+                            let a = Trafo3d.Translation(t) |> Plane.Transform
+                            Plane.update x a
+                        | false -> x
+                    )
+                {m with trafo = TranslateController.updateController m.trafo msg; planeModels = planeModels;}
+            | None ->
+                m
+        
         | OnKeyDown key ->
             match key with
             | Aardvark.Application.Keys.Space ->
-                update m ToggleExtrudeMode
+                update m AddPlane
+            | Aardvark.Application.Keys.Delete ->
+                update m RemovePlane
             | Aardvark.Application.Keys.Enter ->
                 if m.addMode
                 then FinishPoints |> update m
@@ -142,7 +191,14 @@ module App =
             }
             |> Sg.set
         
-        let trafoctrl = TranslateController.viewController (fun x -> x |> TranslateCtrlMsg |> liftMessage) view m.trafo
+        let trafoctrl =
+            m.selected
+            |> Mod.map ( fun s ->
+                match s with
+                | None -> Sg.empty
+                | Some id -> TranslateController.viewController (fun x -> x |> TranslateCtrlMsg |> liftMessage) view m.trafo
+            )
+            |> Sg.dynamic
 
         let points = Utils.Picking.mkSg m.pointsModel view (fun x -> x |> PointsMsg |> liftMessage)
         
@@ -168,17 +224,12 @@ module App =
         ]
     
     let initial =
-        let planeModel =
-            let line   = Line3d(V3d(0.0, 0.0, 0.0), V3d(0.0, 2.0, 0.0))
-            let normal = V3d.IOO
-            Plane.fromLineAndNormal line normal C4b.Red
-
         {
             addMode     = false
             extrudeMode = false
             pointsModel = Utils.Picking.initial
-            planeModels = PList.empty |> PList.append planeModel
-            selected    = Some planeModel.id
+            planeModels = PList.empty
+            selected    = None
             trafo       = TrafoController.initial
             id          = System.Guid.NewGuid().ToString()
         }
