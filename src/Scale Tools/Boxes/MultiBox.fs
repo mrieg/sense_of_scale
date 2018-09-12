@@ -11,6 +11,7 @@ open Aardvark.UI.Primitives
 open MBrace.FsPickler
 
 module MultiBox =
+    open Aardvark.Rendering.GL.MappedBufferImplementations
     
     let setup (numBoxes : int) =
         let boxes =
@@ -64,7 +65,7 @@ module MultiBox =
         | ChangeMoveMode
         | MoveBoxWithMouse        of V3d
         | Escape
-        | Save                    of string
+        | Save
         | Load                    of string
         | SetSceneName            of string
         | NewScene
@@ -306,20 +307,19 @@ module MultiBox =
         | Escape -> {m with addBoxMode = AddBoxMode.Off; addBoxPoints = AddBoxFromPoints.initial; moveBoxMode = false}
 
         | SetSceneName name -> {m with sceneName = name}
-        | Save filename ->
+        | Save ->
             if m.sceneName = ""
             then
                 printfn "Scene has no name! Did not save File."
             else
-                let path = filename + "\\" + m.sceneName + ".bxs"
-
+                let path = "boxscenes\\" + m.sceneName + ".bxs"
+                System.IO.Directory.CreateDirectory("boxscenes") |> ignore
                 let pickler = FsPickler.CreateBinarySerializer()
                 let bytes = pickler.Pickle m
                 do System.IO.File.WriteAllBytes(path, bytes)
-                
                 printfn "Saved Scene to: %s" path
             
-            m
+            m //return state
         
         | Load filename ->
             printfn "Loading %s" filename
@@ -513,11 +513,8 @@ module MultiBox =
                                 { OpenDialogConfig.file with allowMultiple = false; title = "Load Boxes Scene" }
                                 [ clazz "ui button green"; onChooseFile Load ]
                                 [ text "Load" ]
-                        
-                            openDialogButton
-                                { OpenDialogConfig.folder with allowMultiple = false; title = "Save Boxes Scene"; mode = OpenDialogMode.Folder }
-                                [ clazz "ui button green"; onChooseFile Save ]
-                                [ text "Save" ]
+
+                            button [clazz "ui button green"; onClick ( fun _ -> Save )][text "Save"]
                         ]
                         Html.row "New Scene: " [
                             button [clazz "ui button yellow"; onClick ( fun _ -> NewScene )][text "New"]
