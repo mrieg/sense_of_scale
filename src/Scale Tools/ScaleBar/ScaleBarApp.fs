@@ -31,17 +31,26 @@ module App =
         | SetPos pos       -> {m with scaleBar = {m.scaleBar with pos = pos}}
     
     let viewScene (m : MModel) (view : IMod<CameraView>) =
-        Mod.map2 ( fun stepped horiz ->
-            if stepped
-            then
-                if horiz
-                then ScaleBar.drawBarHorizontalStepped m.scaleBar view
-                else ScaleBar.drawBarVerticalStepped m.scaleBar view
-            else
-                if horiz
-                then ScaleBar.drawBarHorizontal m.scaleBar view
-                else ScaleBar.drawBarVertical m.scaleBar view
-        ) m.stepped m.horizontal
+        adaptive {
+            let! height = m.height.value
+            let! stepped = m.stepped
+            let! horiz = m.horizontal
+            //uncomment for correct labels when stepping, bad performance
+            //let! v = view
+            
+            let sg =
+                if stepped
+                    then
+                    if horiz
+                    then ScaleBar.drawBarHorizontalStepped m.scaleBar view
+                    else ScaleBar.drawBarVerticalStepped m.scaleBar view
+                else
+                    if horiz
+                    then ScaleBar.drawBarHorizontal m.scaleBar view
+                    else ScaleBar.drawBarVertical m.scaleBar view
+            
+            return sg
+        }
         |> Sg.dynamic
     
     let viewScene' (m : MModel) (view : IMod<CameraView>) pickSg (liftMessage : Action -> 'msg) =

@@ -400,10 +400,15 @@ module App =
                 }
             
             let labA =
-                Sg.text (Font.create "arial" FontStyle.Regular) C4b.White a
-                |> Sg.billboard
-                |> Sg.noEvents
-                |> Sg.trafo transA
+                adaptive {
+                    let! x = m.ellipse.a
+                    return
+                        Sg.text (Font.create "arial" FontStyle.Regular) C4b.White a
+                        |> Sg.billboard
+                        |> Sg.noEvents
+                        |> Sg.trafo transA
+                }
+                |> Sg.dynamic
             
             let transB =
                 adaptive {
@@ -424,10 +429,15 @@ module App =
                 }
             
             let labB =
-                Sg.text (Font.create "arial" FontStyle.Regular) C4b.White b
-                |> Sg.billboard
-                |> Sg.noEvents
-                |> Sg.trafo transB
+                adaptive {
+                    let! y = m.ellipse.b
+                    return
+                        Sg.text (Font.create "arial" FontStyle.Regular) C4b.White b
+                        |> Sg.billboard
+                        |> Sg.noEvents
+                        |> Sg.trafo transB
+                }
+                |> Sg.dynamic
             
             [labA; labB]
             |> Sg.ofList

@@ -66,8 +66,6 @@
   <ItemGroup>
     <Compile Include="TestModel.fs" />
     <Compile Include="TestApp.fs" />
-    <Compile Include="FalseColorModel.fs" />
-    <Compile Include="FalseColorLegendApp.fs" />
     <Compile Include="OrientationCube\CubeModel.fs" />
     <Compile Include="OrientationCube\OrientationCube.fs" />
     <Compile Include="Mars\Mars.fs" />

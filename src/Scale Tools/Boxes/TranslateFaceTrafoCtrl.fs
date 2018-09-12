@@ -33,7 +33,7 @@ module TranslateFaceTrafoCtrl =
                ]
                
         let scaleTrafo (pos : IMod<V3d>) =
-            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.3) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.26) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
 
         let pickGraph =
             Sg.empty 
@@ -45,7 +45,6 @@ module TranslateFaceTrafoCtrl =
                                 yield Global.onMouseUp   (fun _ -> Release)
                         }
                     )
-                //|> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
                 |> Sg.trafo (TrafoController.pickingTrafo m)
                 |> Sg.map liftMessage
         
@@ -56,19 +55,6 @@ module TranslateFaceTrafoCtrl =
         let arrowX' = arrow (Trafo3d.RotationY -Constant.PiHalf) Axis.X
         let arrowY' = arrow (Trafo3d.RotationX Constant.PiHalf)  Axis.Y
         let arrowZ' = arrow (Trafo3d.Scale -1.0)                 Axis.Z
-          
-        let currentTrafo : IMod<Trafo3d> =
-            adaptive {
-                let! mode = m.mode
-                match mode with
-                    | TrafoMode.Local -> 
-                        return! m.previewTrafo
-                    | TrafoMode.Global -> 
-                        let! a = m.previewTrafo
-                        return Trafo3d.Translation(a.Forward.TransformPos(V3d.Zero))
-                    | _ -> 
-                        return failwith ""
-            }
         
         let sgList =
             match f with
@@ -82,9 +68,7 @@ module TranslateFaceTrafoCtrl =
         let scene =
             Sg.ofList sgList
             |> Sg.effect [ Shader.stableTrafo |> toEffect; Shader.hoverColor |> toEffect]
-            //|> Sg.trafo (currentTrafo |> TrafoController.getTranslation |> scaleTrafo)
-            //|> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
-            //|> Sg.trafo currentTrafo
+            |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
             |> Sg.map liftMessage   
         
         Sg.ofList [pickGraph; scene]
