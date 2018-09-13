@@ -34,7 +34,7 @@ module Plane =
             let kdTree = Geometry.KdTree.build Geometry.Spatial.triangle Geometry.KdBuildInfo.Default [|tri0; tri1|]
             
             return
-                Sg.triangles m.color triangles
+                Sg.triangles (C4b(100, 100, 160, 90) |> Mod.constant) triangles
                 |> Sg.noEvents
                 |> Sg.pickable (kdTree |> PickShape.Triangles)
         }
@@ -57,18 +57,18 @@ module Plane =
         let pose = {Pose.translate c with rotation = rot}
         {TrafoController.initial with pose = pose; previewTrafo = Pose.toTrafo pose; mode = TrafoMode.Local}
     
-    let setup v0 v1 v2 v3 color =
+    let setup v0 v1 v2 v3 group =
         {
             v0    = v0
             v1    = v1
             v2    = v2
             v3    = v3
-            color = color
+            group = group
             id    = System.Guid.NewGuid().ToString()
         }
     
-    let fromLineAndNormal (line : Line3d) (normal : V3d) (color : C4b) =
-        let offset = V3d.Cross(normal.Normalized, line.Direction.Normalized) * 0.5
+    let fromLineAndNormal (line : Line3d) (normal : V3d) (group : int) =
+        let offset = V3d.Cross(normal.Normalized, line.Direction.Normalized) * 10.0
         let v0     = line.P0
         let v1     = line.P1
         let v2     = v1 + offset
@@ -78,7 +78,7 @@ module Plane =
             v1    = v1
             v2    = v2
             v3    = v3
-            color = color
+            group = group
             id    = System.Guid.NewGuid().ToString()
         }
     
@@ -107,14 +107,29 @@ module App =
             {m with pointsModel = Utils.Picking.update m.pointsModel msg}
         | FinishPoints ->
             let pts = m.pointsModel.points
-            if pts.Count < 2
+            if pts.Count < 3
             then m
             else
-                let plane = Plane.fromLineAndNormal ( Line3d(pts.[0].pos, pts.[1].pos) ) V3d.IOO C4b.White
+                let vecs = pts |> PList.toList |> List.map( fun x -> x.pos ) |> Boxes.PCA.pca
+                let eig0 = vecs.[0]
+                let eig1 = vecs.[1]
+                let eig2 = vecs.[2]
+
+                let p0 = pts.[0].pos
+                let p1 = pts.[1].pos
+
+                let v0 = p0 + (eig1*0.25)
+                let v1 = p1 + (eig1*0.25)
+                let v2 = p1 - (eig1*0.25)
+                let v3 = p0 - (eig1*0.25)
+
+                let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1)
+                
                 let planeModels =
                     m.planeModels
                     |> PList.append plane
-                update {m with pointsModel = Utils.Picking.Action.Reset |> Utils.Picking.update m.pointsModel; addMode = false; planeModels = planeModels} (Select plane.id)
+                
+                update {m with pointsModel = Utils.Picking.Action.Reset |> Utils.Picking.update m.pointsModel; addMode = false; planeModels = planeModels; maxGroupId = m.maxGroupId+1} (Select plane.id)
         
         | ToggleAddMode ->
             {m with addMode = not m.addMode; pointsModel = Utils.Picking.Action.Reset |> Utils.Picking.update m.pointsModel; extrudeMode = false}
@@ -127,7 +142,8 @@ module App =
             match m.selected with
             | Some id ->
                 let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
-                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 C4b.Red
+                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group
+                printfn "GROUP: %A" newPlane.group
                 let trafo = m.trafo
                 let planeModels = m.planeModels |> PList.append newPlane
                 {m with planeModels = planeModels; selected = Some newPlane.id; trafo = trafo}
@@ -200,6 +216,7 @@ module App =
                 | Some id -> TranslateController.viewController (fun x -> x |> TranslateCtrlMsg |> liftMessage) view m.trafo
             )
             |> Sg.dynamic
+            |> Sg.depthTest (DepthTestMode.Always |> Mod.constant)
 
         let points = Utils.Picking.mkSg m.pointsModel view (fun x -> x |> PointsMsg |> liftMessage)
         
@@ -232,5 +249,6 @@ module App =
             planeModels = PList.empty
             selected    = None
             trafo       = TrafoController.initial
+            maxGroupId  = 0
             id          = System.Guid.NewGuid().ToString()
         }

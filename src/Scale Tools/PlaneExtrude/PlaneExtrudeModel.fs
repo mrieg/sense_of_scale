@@ -11,7 +11,8 @@ type PlaneModel =
         v1    : V3d
         v2    : V3d
         v3    : V3d
-        color : C4b
+
+        group : int
 
         [<NonIncremental>]
         id : string
@@ -23,9 +24,10 @@ type Model =
         addMode     : bool
         extrudeMode : bool
         pointsModel : Utils.PickPointsModel
-        planeModels  : plist<PlaneModel>
+        planeModels : plist<PlaneModel>
         selected    : option<string>
-        trafo : Transformation
+        trafo       : Transformation
+        maxGroupId  : int
 
         [<NonIncremental>]
         id : string

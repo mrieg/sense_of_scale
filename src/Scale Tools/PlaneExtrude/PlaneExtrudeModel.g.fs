@@ -17,13 +17,13 @@ module Mutable =
         let _v1 = ResetMod.Create(__initial.v1)
         let _v2 = ResetMod.Create(__initial.v2)
         let _v3 = ResetMod.Create(__initial.v3)
-        let _color = ResetMod.Create(__initial.color)
+        let _group = ResetMod.Create(__initial.group)
         
         member x.v0 = _v0 :> IMod<_>
         member x.v1 = _v1 :> IMod<_>
         member x.v2 = _v2 :> IMod<_>
         member x.v3 = _v3 :> IMod<_>
-        member x.color = _color :> IMod<_>
+        member x.group = _group :> IMod<_>
         member x.id = __current.Value.id
         
         member x.Current = __current :> IMod<_>
@@ -35,7 +35,7 @@ module Mutable =
                 ResetMod.Update(_v1,v.v1)
                 ResetMod.Update(_v2,v.v2)
                 ResetMod.Update(_v3,v.v3)
-                ResetMod.Update(_color,v.color)
+                ResetMod.Update(_group,v.group)
                 
         
         static member Create(__initial : PlaneExtrude.PlaneModel) : MPlaneModel = MPlaneModel(__initial)
@@ -76,11 +76,11 @@ module Mutable =
                     override x.Set(r,v) = { r with v3 = v }
                     override x.Update(r,f) = { r with v3 = f r.v3 }
                 }
-            let color =
-                { new Lens<PlaneExtrude.PlaneModel, Aardvark.Base.C4b>() with
-                    override x.Get(r) = r.color
-                    override x.Set(r,v) = { r with color = v }
-                    override x.Update(r,f) = { r with color = f r.color }
+            let group =
+                { new Lens<PlaneExtrude.PlaneModel, System.Int32>() with
+                    override x.Get(r) = r.group
+                    override x.Set(r,v) = { r with group = v }
+                    override x.Update(r,f) = { r with group = f r.group }
                 }
             let id =
                 { new Lens<PlaneExtrude.PlaneModel, System.String>() with
@@ -99,6 +99,7 @@ module Mutable =
         let _planeModels = MList.Create(__initial.planeModels, (fun v -> MPlaneModel.Create(v)), (fun (m,v) -> MPlaneModel.Update(m, v)), (fun v -> v))
         let _selected = MOption.Create(__initial.selected)
         let _trafo = Aardvark.UI.Trafos.Mutable.MTransformation.Create(__initial.trafo)
+        let _maxGroupId = ResetMod.Create(__initial.maxGroupId)
         
         member x.addMode = _addMode :> IMod<_>
         member x.extrudeMode = _extrudeMode :> IMod<_>
@@ -106,6 +107,7 @@ module Mutable =
         member x.planeModels = _planeModels :> alist<_>
         member x.selected = _selected :> IMod<_>
         member x.trafo = _trafo
+        member x.maxGroupId = _maxGroupId :> IMod<_>
         member x.id = __current.Value.id
         
         member x.Current = __current :> IMod<_>
@@ -119,6 +121,7 @@ module Mutable =
                 MList.Update(_planeModels, v.planeModels)
                 MOption.Update(_selected, v.selected)
                 Aardvark.UI.Trafos.Mutable.MTransformation.Update(_trafo, v.trafo)
+                ResetMod.Update(_maxGroupId,v.maxGroupId)
                 
         
         static member Create(__initial : PlaneExtrude.Model) : MModel = MModel(__initial)
@@ -170,6 +173,12 @@ module Mutable =
                     override x.Get(r) = r.trafo
                     override x.Set(r,v) = { r with trafo = v }
                     override x.Update(r,f) = { r with trafo = f r.trafo }
+                }
+            let maxGroupId =
+                { new Lens<PlaneExtrude.Model, System.Int32>() with
+                    override x.Get(r) = r.maxGroupId
+                    override x.Set(r,v) = { r with maxGroupId = v }
+                    override x.Update(r,f) = { r with maxGroupId = f r.maxGroupId }
                 }
             let id =
                 { new Lens<PlaneExtrude.Model, System.String>() with

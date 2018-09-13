@@ -234,6 +234,3 @@ module PCA =
         let size = aaBox.Size
         
         (center, size, rot)
-    
-    let fitPlane (pts : V3d list) =
-        0
