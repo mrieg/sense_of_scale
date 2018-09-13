@@ -57,17 +57,18 @@ module Plane =
         let pose = {Pose.translate c with rotation = rot}
         {TrafoController.initial with pose = pose; previewTrafo = Pose.toTrafo pose; mode = TrafoMode.Local}
     
-    let setup v0 v1 v2 v3 group =
+    let setup v0 v1 v2 v3 group order =
         {
             v0    = v0
             v1    = v1
             v2    = v2
             v3    = v3
             group = group
+            order = order
             id    = System.Guid.NewGuid().ToString()
         }
     
-    let fromLineAndNormal (line : Line3d) (normal : V3d) (group : int) =
+    let fromLineAndNormal (line : Line3d) (normal : V3d) (group : int) (order : int) =
         let offset = V3d.Cross(normal.Normalized, line.Direction.Normalized) * 10.0
         let v0     = line.P0
         let v1     = line.P1
@@ -79,6 +80,7 @@ module Plane =
             v2    = v2
             v3    = v3
             group = group
+            order = order
             id    = System.Guid.NewGuid().ToString()
         }
     
@@ -123,7 +125,7 @@ module App =
                 let v2 = p1 - (eig1*0.25)
                 let v3 = p0 - (eig1*0.25)
 
-                let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1)
+                let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1) 0
                 
                 let planeModels =
                     m.planeModels
@@ -142,8 +144,7 @@ module App =
             match m.selected with
             | Some id ->
                 let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
-                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group
-                printfn "GROUP: %A" newPlane.group
+                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group (p.order+1)
                 let trafo = m.trafo
                 let planeModels = m.planeModels |> PList.append newPlane
                 {m with planeModels = planeModels; selected = Some newPlane.id; trafo = trafo}

@@ -13,6 +13,7 @@ type PlaneModel =
         v3    : V3d
 
         group : int
+        order : int
 
         [<NonIncremental>]
         id : string
