@@ -68,22 +68,6 @@ module Plane =
             id    = System.Guid.NewGuid().ToString()
         }
     
-    let fromLineAndNormal (line : Line3d) (normal : V3d) (group : int) (order : int) =
-        let offset = V3d.Cross(normal.Normalized, line.Direction.Normalized) * 10.0
-        let v0     = line.P0
-        let v1     = line.P1
-        let v2     = v1 + offset
-        let v3     = v0 + offset
-        {
-            v0    = v0
-            v1    = v1
-            v2    = v2
-            v3    = v3
-            group = group
-            order = order
-            id    = System.Guid.NewGuid().ToString()
-        }
-    
 module App =
 
     type Action =
@@ -104,7 +88,13 @@ module App =
         | Select id ->
             let p = m.planeModels.AsList |> List.find (fun x -> x.id = id)
             let trafo = p |> Plane.mkTrafo
-            {m with selected = Some id; trafo = trafo}
+            match m.selected with
+            | None -> {m with selected = Some id; trafo = trafo}
+            | Some sel ->
+                match id = sel with
+                | true  -> {m with selected = None; trafo = trafo} //Unselect
+                | false -> {m with selected = Some id; trafo = trafo}
+            
         | PointsMsg msg ->
             {m with pointsModel = Utils.Picking.update m.pointsModel msg}
         | FinishPoints ->
