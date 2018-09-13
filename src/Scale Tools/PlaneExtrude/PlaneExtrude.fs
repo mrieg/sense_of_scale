@@ -110,8 +110,7 @@ module App =
             if pts.Count < 2
             then m
             else
-                //let plane = (Plane.fromLineAndNormal (Line3d(V3d(0.0, 0.0, 0.0), V3d(1.0, 1.0, 1.0))) (V3d.IOO) (C4b.White))
-                let plane = (Plane.fromLineAndNormal (Line3d(V3d(-1.0, -1.0, 0.0), V3d(1.0, 1.0, 0.0))) (V3d.IOO) (C4b.White))
+                let plane = Plane.fromLineAndNormal ( Line3d(pts.[0].pos, pts.[1].pos) ) V3d.IOO C4b.White
                 let planeModels =
                     m.planeModels
                     |> PList.append plane
