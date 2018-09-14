@@ -29,7 +29,7 @@ module TranslateFaceTrafoCtrl =
             |> Sg.withEvents [ 
                     Sg.onEnter        (fun _ ->   Hover axis)
                     Sg.onMouseDownEvt (fun evt -> Grab (evt.localRay, axis))
-                    Sg.onLeave        (fun _ ->   Unhover) 
+                    Sg.onLeave        (fun _ ->   Unhover)
                ]
                
         let scaleTrafo (pos : IMod<V3d>) =
@@ -69,6 +69,6 @@ module TranslateFaceTrafoCtrl =
             Sg.ofList sgList
             |> Sg.effect [ Shader.stableTrafo |> toEffect; Shader.hoverColor |> toEffect]
             |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
-            |> Sg.map liftMessage   
+            |> Sg.map liftMessage
         
         Sg.ofList [pickGraph; scene]

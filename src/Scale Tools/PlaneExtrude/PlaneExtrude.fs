@@ -3,12 +3,64 @@ namespace PlaneExtrude
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
+open Aardvark.Base.Geometry
 open Aardvark.SceneGraph
 open Aardvark.Rendering
 open Aardvark.Rendering.Text
 open Aardvark.UI
 open Aardvark.UI.Trafos
 open Aardvark.UI.Primitives
+open Aardvark.UI.Trafos.TrafoController
+open Aardvark.UI.Trafos.TranslateController
+
+module TranslatePlaneTrafoCtrl =
+    let viewController (liftMessage : TrafoController.Action -> 'msg) (v : IMod<CameraView>) (m : MTransformation) =
+        let arrow rot axis =
+            let col =
+                m.hovered |> Mod.map2 (colorMatch axis) (m.grabbed |> Mod.map (Option.map ( fun p -> p.axis )))
+
+            Sg.cylinder tessellation col (Mod.constant cylinderRadius) (Mod.constant 1.0) 
+            |> Sg.noEvents
+            |> Sg.andAlso (                
+                IndexedGeometryPrimitives.solidCone V3d.OOI V3d.OOI coneHeight coneRadius tessellation C4b.Red 
+                 |> Sg.ofIndexedGeometry 
+                 |> Sg.noEvents
+                )
+            |> Sg.pickable (Cylinder3d(V3d.OOO,V3d.OOI + V3d(0.0,0.0,0.1),cylinderRadius + 0.1) |> PickShape.Cylinder)
+            |> Sg.transform rot       
+            |> Sg.uniform "HoverColor" col           
+            |> Sg.withEvents [ 
+                    Sg.onEnter        (fun _ ->   Hover axis)
+                    Sg.onMouseDownEvt (fun evt -> Grab (evt.localRay, axis))
+                    Sg.onLeave        (fun _ ->   Unhover)
+               ]
+               
+        let scaleTrafo (pos : IMod<V3d>) =
+            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.26) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+
+        let pickGraph =
+            Sg.empty 
+                |> Sg.Incremental.withGlobalEvents ( 
+                        amap {
+                            let! grabbed = m.grabbed
+                            if grabbed.IsSome then
+                                yield Global.onMouseMove (fun e -> MoveRay e.localRay)
+                                yield Global.onMouseUp   (fun _ -> Release)
+                        }
+                    )
+                |> Sg.trafo (TrafoController.pickingTrafo m)
+                |> Sg.map liftMessage
+        
+        let sgList = [arrow (Trafo3d.RotationY 0.0) Axis.Z; arrow (Trafo3d.RotationY Constant.Pi) Axis.Z]
+
+        let scene =
+            Sg.ofList sgList
+            |> Sg.effect [ Shader.stableTrafo |> toEffect; Shader.hoverColor |> toEffect]
+            |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
+            |> Sg.map liftMessage
+            |> Sg.trafo m.previewTrafo
+        
+        Sg.ofList [pickGraph; scene]
 
 module Plane =
 
@@ -369,7 +421,7 @@ module App =
                         order |> setupLines
                     )
                     |> PList.ofList
-
+                
                 {m with trafo = TranslateController.updateController m.trafo msg; planeModels = planeModels; lineModels = lineModels}
             | None -> m
         
@@ -412,7 +464,7 @@ module App =
             |> Mod.map ( fun s ->
                 match s with
                 | None -> Sg.empty
-                | Some id -> TranslateController.viewController (fun x -> x |> TranslateCtrlMsg |> liftMessage) view m.trafo
+                | Some id -> TranslatePlaneTrafoCtrl.viewController (fun x -> x |> TranslateCtrlMsg |> liftMessage) view m.trafo
             )
             |> Sg.dynamic
             |> Sg.depthTest (DepthTestMode.Always |> Mod.constant)
