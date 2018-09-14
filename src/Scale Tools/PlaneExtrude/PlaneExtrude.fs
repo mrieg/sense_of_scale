@@ -244,7 +244,7 @@ module App =
                             PELine.setup sp ep
                         )
                         |> PList.ofList
-                    else //2
+                    else if exceptLines.Length = 2 then
                         let sp = (exceptLines |> List.find ( fun x -> x.endPlane.id = id )).startPlane
                         let ep = (exceptLines |> List.find ( fun x -> x.startPlane.id = id )).endPlane
                         let newLine = PELine.setup sp ep
@@ -259,6 +259,8 @@ module App =
                             PELine.setup sp ep
                         )
                         |> PList.ofList
+                    else
+                        m.lineModels
 
                 {m with planeModels = planeModels; lineModels = lineModels; selected = None}
             | None -> m
