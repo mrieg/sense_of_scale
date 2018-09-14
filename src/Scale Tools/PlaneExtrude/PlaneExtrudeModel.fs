@@ -18,14 +18,23 @@ type PlaneModel =
         [<NonIncremental>]
         id : string
     }
+
+[<DomainType>]
+type LineModel =
+    {
+        startPlane : PlaneModel
+        endPlane   : PlaneModel
+    }
     
 [<DomainType>]
 type Model =
     {
-        addMode     : bool
-        extrudeMode : bool
         pointsModel : Utils.PickPointsModel
         planeModels : plist<PlaneModel>
+        lineModels  : plist<LineModel>
+
+        addMode     : bool
+        extrudeMode : bool
         selected    : option<string>
         trafo       : Transformation
         maxGroupId  : int

@@ -199,6 +199,9 @@ module App =
             }
             |> Sg.set
         
+        //TODO
+        let linesSg = Sg.empty
+        
         let trafoctrl =
             m.selected
             |> Mod.map ( fun s ->
@@ -222,7 +225,7 @@ module App =
             )
             |> Sg.dynamic
         
-        [sg; trafoctrl; pointsSg]
+        [sg; linesSg; trafoctrl; pointsSg]
         |> Sg.ofList
     
     let view' (m : MModel) =
@@ -238,6 +241,7 @@ module App =
             extrudeMode = false
             pointsModel = Utils.Picking.initial
             planeModels = PList.empty
+            lineModels  = PList.empty
             selected    = None
             trafo       = TrafoController.initial
             maxGroupId  = 0
