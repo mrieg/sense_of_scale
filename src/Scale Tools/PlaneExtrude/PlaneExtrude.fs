@@ -115,6 +115,11 @@ module PELine =
             let l = Line3d(s,e)
             let lines = [|l|] |> Mod.constant
 
+            let color =
+                match side with
+                | LEFT  -> C4b.VRVisGreen
+                | RIGHT -> C4b.WHITE
+
             let d = (e - s).Length
             let font = Font.create "arial" FontStyle.Regular
             let content = d |> sprintf "%.2fm" |> Mod.constant
@@ -124,13 +129,13 @@ module PELine =
             let labelTrafo = Trafo3d.Scale(scale) * Trafo3d.Translation(c) |> Mod.constant
 
             let labelSg =
-                Sg.text font C4b.White content
+                Sg.text font color content
                 |> Sg.billboard
                 |> Sg.noEvents
                 |> Sg.trafo labelTrafo
-
+            
             return
-                Sg.lines (C4b.White |> Mod.constant) lines
+                Sg.lines (color |> Mod.constant) lines
                 |> Sg.noEvents
                 |> Sg.shader {
                     do! DefaultSurfaces.trafo
