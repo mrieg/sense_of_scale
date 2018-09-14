@@ -58,29 +58,28 @@ module Plane =
         let pose = {Pose.translate c with rotation = rot}
         {TrafoController.initial with pose = pose; previewTrafo = Pose.toTrafo pose; mode = TrafoMode.Local}
     
-    let setup v0 v1 v2 v3 group order =
+    let setup v0 v1 v2 v3 =
         {
             v0    = v0
             v1    = v1
             v2    = v2
             v3    = v3
-            group = group
-            order = order
             id    = System.Guid.NewGuid().ToString()
         }
 
 module PELine =
-    
+
     let setup (startPlane : PlaneModel) (endPlane : PlaneModel) =
         {
-            startPlane = startPlane
-            endPlane   = endPlane
+            startPlane  = startPlane
+            endPlane    = endPlane
         }
 
     let mkSg (m : MLineModel) (view : IMod<CameraView>) =
         adaptive {
             let! v = view
             let camPos = v.Location
+
             let! sv1 = m.startPlane.v1
             let! sv2 = m.startPlane.v2
             let! ev1 = m.endPlane.v1
@@ -107,7 +106,7 @@ module PELine =
                 |> Sg.trafo labelTrafo
 
             return
-                Sg.lines (C4b.Red |> Mod.constant) lines
+                Sg.lines (C4b.White |> Mod.constant) lines
                 |> Sg.noEvents
                 |> Sg.shader {
                     do! DefaultSurfaces.trafo
@@ -165,7 +164,7 @@ module App =
                 let v2 = p1 - (eig1*0.25)
                 let v3 = p0 - (eig1*0.25)
 
-                let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1) 0
+                let plane = Plane.setup v0 v1 v2 v3
                 
                 let planeModels =
                     m.planeModels
@@ -185,13 +184,33 @@ module App =
             | Some id ->
                 let planes = m.planeModels |> PList.toList
                 let p = planes |> List.find (fun x -> x.id = id)
-                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group (p.order+1)
+                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3
                 let trafo = m.trafo
                 let planeModels = m.planeModels |> PList.append newPlane
 
-                let line = PELine.setup p newPlane
-                let lineModels = m.lineModels |> PList.append line
-                //TODO: bottom-top line
+                let oldLines =
+                    m.lineModels
+                    |> PList.toList
+                    |> List.filter ( fun l ->
+                        l.startPlane.id = id
+                    )
+                
+                let lineModels =
+                    if oldLines.Length = 0
+                    then
+                        let line = PELine.setup p newPlane
+                        m.lineModels |> PList.append line
+                    else
+                        let newLines =
+                            [
+                                PELine.setup p newPlane
+                                PELine.setup newPlane oldLines.[0].endPlane
+                            ]
+                        m.lineModels
+                        |> PList.toList
+                        |> List.except oldLines
+                        |> List.append newLines
+                        |> PList.ofList
 
                 {m with planeModels = planeModels; lineModels = lineModels; selected = Some newPlane.id; trafo = trafo}
             | None -> m
@@ -201,11 +220,47 @@ module App =
             | Some id ->
                 let planes = m.planeModels |> PList.toList
                 let p = planes |> List.find (fun x -> x.id = id)
-                let planeModels = planes |> List.except [p] |> PList.ofList
+                let planeModels =
+                    planes
+                    |> List.except [p]
+                    |> PList.ofList
+                
+                let exceptLines =
+                    m.lineModels
+                    |> PList.toList
+                    |> List.filter ( fun l ->
+                        l.startPlane.id = id || l.endPlane.id = id
+                    )
+                
+                let lineModels =
+                    if exceptLines.Length = 1
+                    then
+                        m.lineModels
+                        |> PList.toList
+                        |> List.except exceptLines
+                        |> List.map ( fun l ->
+                            let sp = planeModels |> PList.toList |> List.find( fun x -> x.id = l.startPlane.id )
+                            let ep = planeModels |> PList.toList |> List.find( fun x -> x.id = l.endPlane.id )
+                            PELine.setup sp ep
+                        )
+                        |> PList.ofList
+                    else //2
+                        let sp = (exceptLines |> List.find ( fun x -> x.endPlane.id = id )).startPlane
+                        let ep = (exceptLines |> List.find ( fun x -> x.startPlane.id = id )).endPlane
+                        let newLine = PELine.setup sp ep
 
-                //TODO: adjust lines (also bottom-top)
+                        m.lineModels
+                        |> PList.toList
+                        |> List.except exceptLines
+                        |> List.append [newLine]
+                        |> List.map ( fun l ->
+                            let sp = planeModels |> PList.toList |> List.find( fun x -> x.id = l.startPlane.id )
+                            let ep = planeModels |> PList.toList |> List.find( fun x -> x.id = l.endPlane.id )
+                            PELine.setup sp ep
+                        )
+                        |> PList.ofList
 
-                {m with planeModels = planeModels; selected = None}
+                {m with planeModels = planeModels; lineModels = lineModels; selected = None}
             | None -> m
 
         | TranslateCtrlMsg msg ->

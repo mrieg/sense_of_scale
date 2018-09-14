@@ -12,9 +12,6 @@ type PlaneModel =
         v2    : V3d
         v3    : V3d
 
-        group : int
-        order : int
-
         [<NonIncremental>]
         id : string
     }
@@ -22,8 +19,8 @@ type PlaneModel =
 [<DomainType>]
 type LineModel =
     {
-        startPlane : PlaneModel
-        endPlane   : PlaneModel
+        startPlane  : PlaneModel
+        endPlane    : PlaneModel
     }
     
 [<DomainType>]
