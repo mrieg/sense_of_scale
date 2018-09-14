@@ -51,7 +51,7 @@ module TranslatePlaneTrafoCtrl =
                 |> Sg.trafo (TrafoController.pickingTrafo m)
                 |> Sg.map liftMessage
         
-        let sgList = [arrow (Trafo3d.RotationY 0.0) Axis.Z; arrow (Trafo3d.RotationY Constant.Pi) Axis.Z]
+        let sgList = [arrow (Trafo3d.RotationY 0.0) Axis.Z]//; arrow (Trafo3d.RotationY Constant.Pi) Axis.Z]
 
         let scene =
             Sg.ofList sgList
@@ -137,9 +137,6 @@ module PELine =
 
     let mkSg (m : MLineModel) (view : IMod<CameraView>) =
         adaptive {
-            let! v = view
-            let camPos = v.Location
-
             let! side = m.side
             let! sv1 =
                 match side with
@@ -160,6 +157,9 @@ module PELine =
                 match side with
                 | LEFT  -> m.endPlane.v3
                 | RIGHT -> m.endPlane.v2
+            
+            let! v = view
+            let camPos = v.Location
 
             let s = (sv1 + sv2) * 0.5
             let e = (ev1 + ev2) * 0.5
