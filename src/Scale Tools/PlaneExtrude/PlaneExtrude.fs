@@ -118,7 +118,7 @@ module PELine =
             let color =
                 match side with
                 | LEFT  -> C4b.VRVisGreen
-                | RIGHT -> C4b.WHITE
+                | RIGHT -> C4b.White
 
             let d = (e - s).Length
             let font = Font.create "arial" FontStyle.Regular
