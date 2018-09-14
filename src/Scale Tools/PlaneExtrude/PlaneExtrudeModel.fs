@@ -19,12 +19,17 @@ type PlaneModel =
         id : string
     }
 
+type LineSide =
+    | LEFT
+    | RIGHT
+
 [<DomainType>]
 type LineModel =
     {
         startPlane : PlaneModel
         endPlane   : PlaneModel
         group      : int
+        side       : LineSide
     }
     
 [<DomainType>]

@@ -75,11 +75,12 @@ module Plane =
 
 module PELine =
 
-    let setup (startPlane : PlaneModel) (endPlane : PlaneModel) (group : int) =
+    let setup (startPlane : PlaneModel) (endPlane : PlaneModel) (group : int) (side : LineSide) =
         {
             startPlane  = startPlane
             endPlane    = endPlane
             group       = group
+            side        = side
         }
 
     let mkSg (m : MLineModel) (view : IMod<CameraView>) =
@@ -87,10 +88,26 @@ module PELine =
             let! v = view
             let camPos = v.Location
 
-            let! sv1 = m.startPlane.v1
-            let! sv2 = m.startPlane.v2
-            let! ev1 = m.endPlane.v1
-            let! ev2 = m.endPlane.v2
+            let! side = m.side
+            let! sv1 =
+                match side with
+                | LEFT  -> m.startPlane.v0
+                | RIGHT -> m.startPlane.v1
+            
+            let! sv2 =
+                match side with
+                | LEFT  -> m.startPlane.v3
+                | RIGHT -> m.startPlane.v2
+                
+            let! ev1 =
+                match side with
+                | LEFT  -> m.endPlane.v0
+                | RIGHT -> m.endPlane.v1
+            
+            let! ev2 =
+                match side with
+                | LEFT  -> m.endPlane.v3
+                | RIGHT -> m.endPlane.v2
 
             let s = (sv1 + sv2) * 0.5
             let e = (ev1 + ev2) * 0.5
@@ -169,8 +186,12 @@ module App =
             for i in 0..order.Length-2 do
                 let sp = order.[i]
                 let ep = order.[i+1]
-                let line = PELine.setup sp ep sp.group
+                let line = PELine.setup sp ep sp.group LineSide.RIGHT
                 yield line
+            
+            if order.Length >= 2
+            then
+                yield PELine.setup order.[0] order.[order.Length-1] order.[0].group LineSide.LEFT
         ]
 
     let rec update (m : Model) (a : Action) =

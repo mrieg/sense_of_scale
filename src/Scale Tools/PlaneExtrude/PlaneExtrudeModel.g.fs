@@ -114,10 +114,12 @@ module Mutable =
         let _startPlane = MPlaneModel.Create(__initial.startPlane)
         let _endPlane = MPlaneModel.Create(__initial.endPlane)
         let _group = ResetMod.Create(__initial.group)
+        let _side = ResetMod.Create(__initial.side)
         
         member x.startPlane = _startPlane
         member x.endPlane = _endPlane
         member x.group = _group :> IMod<_>
+        member x.side = _side :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : PlaneExtrude.LineModel) =
@@ -127,6 +129,7 @@ module Mutable =
                 MPlaneModel.Update(_startPlane, v.startPlane)
                 MPlaneModel.Update(_endPlane, v.endPlane)
                 ResetMod.Update(_group,v.group)
+                ResetMod.Update(_side,v.side)
                 
         
         static member Create(__initial : PlaneExtrude.LineModel) : MLineModel = MLineModel(__initial)
@@ -160,6 +163,12 @@ module Mutable =
                     override x.Get(r) = r.group
                     override x.Set(r,v) = { r with group = v }
                     override x.Update(r,f) = { r with group = f r.group }
+                }
+            let side =
+                { new Lens<PlaneExtrude.LineModel, PlaneExtrude.LineSide>() with
+                    override x.Get(r) = r.side
+                    override x.Set(r,v) = { r with side = v }
+                    override x.Update(r,f) = { r with side = f r.side }
                 }
     
     
