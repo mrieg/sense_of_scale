@@ -5,6 +5,7 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.Rendering
+open Aardvark.Rendering.Text
 open Aardvark.UI
 open Aardvark.UI.Trafos
 open Aardvark.UI.Primitives
@@ -67,6 +68,55 @@ module Plane =
             order = order
             id    = System.Guid.NewGuid().ToString()
         }
+
+module PELine =
+    
+    let setup (startPlane : PlaneModel) (endPlane : PlaneModel) =
+        {
+            startPlane = startPlane
+            endPlane   = endPlane
+        }
+
+    let mkSg (m : MLineModel) (view : IMod<CameraView>) =
+        adaptive {
+            let! v = view
+            let camPos = v.Location
+            let! sv1 = m.startPlane.v1
+            let! sv2 = m.startPlane.v2
+            let! ev1 = m.endPlane.v1
+            let! ev2 = m.endPlane.v2
+
+            let s = (sv1 + sv2) * 0.5
+            let e = (ev1 + ev2) * 0.5
+            let c = (s + e) * 0.5
+            let l = Line3d(s,e)
+            let lines = [|l|] |> Mod.constant
+
+            let d = (e - s).Length
+            let font = Font.create "arial" FontStyle.Regular
+            let content = d |> sprintf "%.2fm" |> Mod.constant
+
+            let camDist = (c - camPos).Length
+            let scale = Fun.Max(0.05, camDist / 52.0)
+            let labelTrafo = Trafo3d.Scale(scale) * Trafo3d.Translation(c) |> Mod.constant
+
+            let labelSg =
+                Sg.text font C4b.White content
+                |> Sg.billboard
+                |> Sg.noEvents
+                |> Sg.trafo labelTrafo
+
+            return
+                Sg.lines (C4b.Red |> Mod.constant) lines
+                |> Sg.noEvents
+                |> Sg.shader {
+                    do! DefaultSurfaces.trafo
+                    do! DefaultSurfaces.vertexColor
+                }
+                |> Sg.andAlso labelSg
+        }
+        |> Sg.dynamic
+        |> Sg.depthTest (DepthTestMode.Always |> Mod.constant)
     
 module App =
 
@@ -97,7 +147,7 @@ module App =
             
         | PointsMsg msg ->
             {m with pointsModel = Utils.Picking.update m.pointsModel msg}
-        | FinishPoints ->
+        | FinishPoints -> //adds a new group with the first plane
             let pts = m.pointsModel.points
             if pts.Count < 3
             then m
@@ -130,28 +180,33 @@ module App =
             then m
             else {m with extrudeMode = not m.extrudeMode}
         
-        | AddPlane ->
+        | AddPlane -> //adds a new plane to the selected group
             match m.selected with
             | Some id ->
-                let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
+                let planes = m.planeModels |> PList.toList
+                let p = planes |> List.find (fun x -> x.id = id)
                 let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group (p.order+1)
                 let trafo = m.trafo
                 let planeModels = m.planeModels |> PList.append newPlane
-                {m with planeModels = planeModels; selected = Some newPlane.id; trafo = trafo}
-            | None ->
-                m
+
+                let line = PELine.setup p newPlane
+                let lineModels = m.lineModels |> PList.append line
+                //TODO: bottom-top line
+
+                {m with planeModels = planeModels; lineModels = lineModels; selected = Some newPlane.id; trafo = trafo}
+            | None -> m
+        
         | RemovePlane ->
             match m.selected with
             | Some id ->
-                let p = m.planeModels |> PList.toList |> List.find (fun x -> x.id = id)
-                let planeModels =
-                    m.planeModels
-                    |> PList.toList
-                    |> List.except [p]
-                    |> PList.ofList
+                let planes = m.planeModels |> PList.toList
+                let p = planes |> List.find (fun x -> x.id = id)
+                let planeModels = planes |> List.except [p] |> PList.ofList
+
+                //TODO: adjust lines (also bottom-top)
+
                 {m with planeModels = planeModels; selected = None}
-            | None ->
-                m
+            | None -> m
 
         | TranslateCtrlMsg msg ->
             match m.selected with
@@ -168,9 +223,25 @@ module App =
                             Plane.update x a
                         | false -> x
                     )
-                {m with trafo = TranslateController.updateController m.trafo msg; planeModels = planeModels;}
-            | None ->
-                m
+                
+                let lineModels =
+                    m.lineModels
+                    |> PList.map ( fun line ->
+                        let startPlane =
+                            planeModels
+                            |> PList.toList
+                            |> List.find ( fun x -> x.id = line.startPlane.id )
+                        
+                        let endPlane =
+                            planeModels
+                            |> PList.toList
+                            |> List.find ( fun x -> x.id = line.endPlane.id )
+                        
+                        PELine.setup startPlane endPlane
+                    )
+
+                {m with trafo = TranslateController.updateController m.trafo msg; planeModels = planeModels; lineModels = lineModels}
+            | None -> m
         
         | OnKeyDown key ->
             match key with
@@ -199,8 +270,12 @@ module App =
             }
             |> Sg.set
         
-        //TODO
-        let linesSg = Sg.empty
+        let linesSg =
+            aset {
+                for line in m.lineModels |> AList.toASet do
+                    yield PELine.mkSg line view
+            }
+            |> Sg.set
         
         let trafoctrl =
             m.selected
