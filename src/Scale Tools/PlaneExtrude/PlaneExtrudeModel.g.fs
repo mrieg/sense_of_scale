@@ -17,11 +17,13 @@ module Mutable =
         let _v1 = ResetMod.Create(__initial.v1)
         let _v2 = ResetMod.Create(__initial.v2)
         let _v3 = ResetMod.Create(__initial.v3)
+        let _group = ResetMod.Create(__initial.group)
         
         member x.v0 = _v0 :> IMod<_>
         member x.v1 = _v1 :> IMod<_>
         member x.v2 = _v2 :> IMod<_>
         member x.v3 = _v3 :> IMod<_>
+        member x.group = _group :> IMod<_>
         member x.id = __current.Value.id
         
         member x.Current = __current :> IMod<_>
@@ -33,6 +35,7 @@ module Mutable =
                 ResetMod.Update(_v1,v.v1)
                 ResetMod.Update(_v2,v.v2)
                 ResetMod.Update(_v3,v.v3)
+                ResetMod.Update(_group,v.group)
                 
         
         static member Create(__initial : PlaneExtrude.PlaneModel) : MPlaneModel = MPlaneModel(__initial)
@@ -72,6 +75,12 @@ module Mutable =
                     override x.Get(r) = r.v3
                     override x.Set(r,v) = { r with v3 = v }
                     override x.Update(r,f) = { r with v3 = f r.v3 }
+                }
+            let group =
+                { new Lens<PlaneExtrude.PlaneModel, System.Int32>() with
+                    override x.Get(r) = r.group
+                    override x.Set(r,v) = { r with group = v }
+                    override x.Update(r,f) = { r with group = f r.group }
                 }
             let id =
                 { new Lens<PlaneExtrude.PlaneModel, System.String>() with

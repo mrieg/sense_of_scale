@@ -11,6 +11,7 @@ type PlaneModel =
         v1    : V3d
         v2    : V3d
         v3    : V3d
+        group : int
 
         [<NonIncremental>]
         id : string

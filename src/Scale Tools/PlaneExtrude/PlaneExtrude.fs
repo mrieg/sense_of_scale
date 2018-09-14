@@ -50,6 +50,9 @@ module Plane =
     
     let center (m : PlaneModel) =
         (m.v0 + m.v1 + m.v2 + m.v3) * 0.25
+    
+    let normal (m : PlaneModel) =
+        V3d.Cross(m.v1 - m.v0, m.v2 - m.v0)
 
     let mkTrafo (m : PlaneModel) =
         let normal = V3d.Cross(m.v1 - m.v0, m.v2 - m.v0).Normalized
@@ -58,12 +61,13 @@ module Plane =
         let pose = {Pose.translate c with rotation = rot}
         {TrafoController.initial with pose = pose; previewTrafo = Pose.toTrafo pose; mode = TrafoMode.Local}
     
-    let setup v0 v1 v2 v3 =
+    let setup v0 v1 v2 v3 group =
         {
             v0    = v0
             v1    = v1
             v2    = v2
             v3    = v3
+            group = group
             id    = System.Guid.NewGuid().ToString()
         }
 
@@ -163,8 +167,8 @@ module App =
                 let v1 = p1 + (eig1*0.25)
                 let v2 = p1 - (eig1*0.25)
                 let v3 = p0 - (eig1*0.25)
-
-                let plane = Plane.setup v0 v1 v2 v3
+                
+                let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1)
                 
                 let planeModels =
                     m.planeModels
@@ -184,7 +188,7 @@ module App =
             | Some id ->
                 let planes = m.planeModels |> PList.toList
                 let p = planes |> List.find (fun x -> x.id = id)
-                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3
+                let newPlane = Plane.setup p.v0 p.v1 p.v2 p.v3 p.group
                 let trafo = m.trafo
                 let planeModels = m.planeModels |> PList.append newPlane
 
