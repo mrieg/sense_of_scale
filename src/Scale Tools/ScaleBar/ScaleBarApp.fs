@@ -91,7 +91,7 @@ module App =
         let h        = scaleBar.height
         {
             scaleBar   = scaleBar
-            height     = {Numeric.init with min = 1.0; max = 50.0; step = 1.0; value = h}
+            height     = {Numeric.init with min = 0.0; max = 50.0; step = 0.1; value = h}
             horizontal = false
             stepped    = false
         }

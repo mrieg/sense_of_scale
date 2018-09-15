@@ -14,7 +14,9 @@ module TranslateFaceTrafoCtrl =
     let viewController (liftMessage : TrafoController.Action -> 'msg) (v : IMod<CameraView>) (m : MTransformation) (f : FaceType) =
         let arrow rot axis =
             let col =
-                m.hovered |> Mod.map2 (colorMatch axis) (m.grabbed |> Mod.map (Option.map ( fun p -> p.axis )))
+                let g : IMod<Option<PickPoint>> = m.grabbed
+                let p : IMod<Option<Axis>> =  (g |> Mod.map (Option.map ( fun (p:PickPoint) -> p.axis )))
+                m.hovered |> Mod.map2 (colorMatch axis) p
 
             Sg.cylinder tessellation col (Mod.constant cylinderRadius) (Mod.constant 1.0) 
             |> Sg.noEvents
@@ -29,11 +31,11 @@ module TranslateFaceTrafoCtrl =
             |> Sg.withEvents [ 
                     Sg.onEnter        (fun _ ->   Hover axis)
                     Sg.onMouseDownEvt (fun evt -> Grab (evt.localRay, axis))
-                    Sg.onLeave        (fun _ ->   Unhover)
+                    Sg.onLeave        (fun _ ->   Unhover) 
                ]
                
-        let scaleTrafo (pos : IMod<V3d>) =
-            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.26) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+        let scaleTrafo pos =            
+            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.3) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
 
         let pickGraph =
             Sg.empty 
@@ -44,7 +46,8 @@ module TranslateFaceTrafoCtrl =
                                 yield Global.onMouseMove (fun e -> MoveRay e.localRay)
                                 yield Global.onMouseUp   (fun _ -> Release)
                         }
-                    )
+                    )                
+                |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
                 |> Sg.trafo (TrafoController.pickingTrafo m)
                 |> Sg.map liftMessage
         

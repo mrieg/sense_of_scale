@@ -74,13 +74,7 @@ module Ellipse =
             rotation = rotation
             color    = color.ToC4d().ToV4d()
         }
-    
-(*
-    
-    TODO: correct controls (trafotrls, inputs, setcenter)
-    TODO: precision
 
-*)
 module Controls =
     
     type Action =
@@ -143,14 +137,8 @@ module Controls =
                 Html.row "Color: " [
                     ColorPicker.view m.colPicker |> UI.map ColPickerMessage
                 ]
-                //Html.row "Show Trafocontrols: " [
-                //    Utils.Html.toggleButton m.showTraf "Show" "Hide" ToggleShowTrafo
-                //]
                 Html.row "Debug Ellipsoid: " [
                     Utils.Html.toggleButton m.showDebug "Show" "Hide" ToggleDebug
-                ]
-                Html.row "Kind: " [
-                    Html.SemUi.dropDown m.kind ChangeKind
                 ]
             ]
         ]

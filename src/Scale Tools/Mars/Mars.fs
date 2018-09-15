@@ -35,7 +35,6 @@ module Terrain =
     let pHs =
         [ 
             for h in patchHierarchies do
-                //let p = Path.combine [h; @"Patches\patchhierarchy.xml" ]
                 yield PatchHierarchy.load pickle unpickle h
         ]
     
@@ -59,7 +58,6 @@ module Terrain =
             near             = 0.1
             far              = 10000.0
             speed            = 3.0
-            //lodDecider       = DefaultMetrics.mars
         }
     
     let scene = mars()
@@ -75,27 +73,12 @@ module Terrain =
         |> Sg.noEvents
         |> Sg.transform preTransform
     
-    //plane sg
-    //let mkISg() =
-    //    Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
-    //    |> Sg.box' C4b.DarkBlue
-    //    |> Sg.noEvents
-    //    |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
-    
     let defaultEffects =
         [
             DefaultSurfaces.trafo                   |> toEffect
             DefaultSurfaces.constantColor C4f.White |> toEffect
             DefaultSurfaces.diffuseTexture          |> toEffect
         ]
-
-    //plane default effects
-    //let defaultEffects =
-    //    [
-    //        DefaultSurfaces.trafo                   |> toEffect
-    //        DefaultSurfaces.constantColor C4f.White |> toEffect
-    //        DefaultSurfaces.simpleLighting          |> toEffect
-    //    ]
     
     let simpleLightingEffects =
         let col = C4f(V4d(0.8, 0.5, 0.5, 1.0))
@@ -110,8 +93,6 @@ module Terrain =
     let mutable max     = -V3d.III * 50000000.0
 
     let mutable totalBB = Box3d.Unit.Translated(scene.boundingBox.Center)
-    //plane bb
-    //let mutable totalBB = scene.boundingBox
 
     let patchBB() = totalBB.Translated(-scene.boundingBox.Center)
     
@@ -193,15 +174,93 @@ module Terrain =
             do! DefaultSurfaces.constantColor C4f.DarkRed
         }
         |> Sg.depthTest (Mod.constant DepthTestMode.Never)
+
+module SimpleTerrain =
+    let boundingBox = Box3d.Parse("[[3376372.058677169, -325173.566694686, -121309.194857123], [3376385.170513898, -325152.282144333, -121288.943956908]]")
+    let up = boundingBox.Center.Normalized
+
+    let mkISg() =
+        Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
+        |> Sg.box' C4b.DarkBlue
+        |> Sg.noEvents
+        |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
     
-    //plane picking
-    //let pickSg events =
-    //    mkISg()
-    //    |> Sg.requirePicking
-    //    |> Sg.noEvents
-    //    |> Sg.withEvents events
-    //    |> Sg.shader {
-    //        do! DefaultSurfaces.trafo
-    //        do! DefaultSurfaces.constantColor C4f.DarkRed
-    //    }
-    //    |> Sg.depthTest (Mod.constant DepthTestMode.Never)
+    let defaultEffects =
+        [
+            DefaultSurfaces.trafo                   |> toEffect
+            DefaultSurfaces.constantColor C4f.White |> toEffect
+            DefaultSurfaces.simpleLighting          |> toEffect
+        ]
+    
+    let mutable min     = V3d.III * 50000000.0
+    let mutable max     = -V3d.III * 50000000.0
+    let mutable totalBB = boundingBox
+    
+    let buildKDTree (g : IndexedGeometry) (local2global : Trafo3d) =
+        let pos = g.IndexedAttributes.[DefaultSemantic.Positions] |> unbox<V3f[]>
+        let index = g.IndexArray |> unbox<int[]>
+    
+        let triangles =
+            [| 0 .. 3 .. index.Length - 2 |] 
+                |> Array.choose (fun bi -> 
+                    let p0 = pos.[index.[bi]]
+                    let p1 = pos.[index.[bi + 1]]
+                    let p2 = pos.[index.[bi + 2]]
+                    if isNan p0 || isNan p1 || isNan p2 then
+                        None
+                    else
+                        let a = V3d(float p0.X, float p0.Y, float p0.Z) |> local2global.Forward.TransformPos
+                        let b = V3d(float p1.X, float p1.Y, float p1.Z) |> local2global.Forward.TransformPos
+                        let c = V3d(float p2.X, float p2.Y, float p2.Z) |> local2global.Forward.TransformPos
+                        
+                        if a.X < min.X then min.X <- a.X
+                        if a.Y < min.Y then min.Y <- a.Y
+                        if a.Z < min.Z then min.Z <- a.Z
+                        if a.X > max.X then max.X <- a.X
+                        if a.Y > max.Y then max.Y <- a.Y
+                        if a.Z > max.Z then max.Z <- a.Z
+    
+                        if b.X < min.X then min.X <- b.X
+                        if b.Y < min.Y then min.Y <- b.Y
+                        if b.Z < min.Z then min.Z <- b.Z
+                        if b.X > max.X then max.X <- b.X
+                        if b.Y > max.Y then max.Y <- b.Y
+                        if b.Z > max.Z then max.Z <- b.Z
+    
+                        if c.X < min.X then min.X <- c.X
+                        if c.Y < min.Y then min.Y <- c.Y
+                        if c.Z < min.Z then min.Z <- c.Z
+                        if c.X > max.X then max.X <- c.X
+                        if c.Y > max.Y then max.Y <- c.Y
+                        if c.Z > max.Z then max.Z <- c.Z
+                        
+                        totalBB <- Box3d(min, max)
+                        Triangle3d(V3d p0, V3d p1, V3d p2) |> Some
+                )
+        
+        let tree = Geometry.KdTree.build Geometry.Spatial.triangle (Geometry.KdBuildInfo(100, 5)) triangles
+        tree
+    
+    let leaves =
+        []
+        |> List.collect(fun x ->
+            x.tree |> QTree.getLeaves |> Seq.toList |> List.map(fun y -> (x.baseDir, y)))
+    
+    let kdTrees =
+        leaves
+        |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
+        |> List.map(fun ((a,_),c,d) -> (a,c,d))
+        |> List.map ( fun (g,dir,info) ->
+            buildKDTree g info.Local2Global
+        )
+    
+    let pickSg events =
+        mkISg()
+        |> Sg.requirePicking
+        |> Sg.noEvents
+        |> Sg.withEvents events
+        |> Sg.shader {
+            do! DefaultSurfaces.trafo
+            do! DefaultSurfaces.constantColor C4f.DarkRed
+        }
+        |> Sg.depthTest (Mod.constant DepthTestMode.Never)

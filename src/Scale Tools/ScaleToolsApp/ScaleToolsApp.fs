@@ -70,6 +70,9 @@ module App =
     let pickSg = Mars.Terrain.pickSg
     let sky = Mars.Terrain.up
     let patchBB = Mars.Terrain.patchBB()
+
+    let simpleTerrainSg() = Mars.SimpleTerrain.mkISg()
+    let simplePickSg = Mars.SimpleTerrain.pickSg
     
     let viewScene (m : MModel) =
         let currentScene =
@@ -81,7 +84,7 @@ module App =
                 | AppType.Shading        -> DistanceShading.App.viewScene' m.shadingApp m.camera.view pickSg ShadingMessage
                 | AppType.KnownObjects   -> KnownObject.Multi.viewScene m.objectsApp m.camera.view pickSg KnownObjectMessage
                 | AppType.PlaneExtrude   -> PlaneExtrude.App.viewScene' m.planeExApp m.camera.view pickSg PlaneExMessage
-                | AppType.EllipseShading -> EllipseShading.App.viewScene' m.ellipseApp m.camera.view pickSg EllipseMessage
+                | AppType.EllipseShading -> EllipseShading.App.viewScene' m.ellipseApp m.camera.view simplePickSg EllipseMessage
                 | _ -> Sg.empty
             )
             |> Sg.dynamic
@@ -102,8 +105,8 @@ module App =
                     terrainSg()
                     |> VerticalExaggeration.App.mkEffects m.vertApp m.camera.view effects
                 | AppType.EllipseShading ->
-                    terrainSg()
-                    |> EllipseShading.App.mkEffects m.ellipseApp m.camera.view effects
+                    simpleTerrainSg()
+                    |> EllipseShading.App.mkEffects m.ellipseApp m.camera.view Mars.SimpleTerrain.defaultEffects
                 | _ ->
                     terrainSg()
                     |> Sg.effect effects
