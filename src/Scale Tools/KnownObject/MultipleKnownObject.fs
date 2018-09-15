@@ -94,7 +94,7 @@ module Multi =
                         else Sg.empty
 
                 yield
-                    KnownObject.viewScene' model view pickSg [Sg.onClick ( fun _ -> SelectModel id |> liftMessage )] (fun x -> x |> ModelMessage |> liftMessage)
+                    KnownObject.viewScene' model view pickSg [Sg.onDoubleClick ( fun _ -> SelectModel id |> liftMessage )] (fun x -> x |> ModelMessage |> liftMessage)
                     |> Sg.andAlso (trafoSg)
         }
         |> Sg.set

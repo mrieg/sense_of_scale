@@ -78,7 +78,7 @@ module KnownObject =
             |> Sg.withEvents modelEvents
         
         let events = [Sg.onDoubleClick ( fun v -> SetPos v |> liftMessage )]
-        [pickSg events; sg]
+        [sg; pickSg events]
         |> Sg.ofList
     
     let view' (m : MModel) =

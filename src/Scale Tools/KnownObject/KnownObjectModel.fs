@@ -8,9 +8,7 @@ open Aardvark.UI.Primitives
 type KnownObjectType =
     | UnitCube    = 0
     | UnitSphere  = 1
-    | EiffelTower = 2
     | Hammer      = 3
-    | Knife       = 4
     | Person      = 5
     | Chair       = 6
     | Car         = 7

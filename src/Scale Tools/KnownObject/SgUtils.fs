@@ -32,20 +32,18 @@ module Loader =
         let modelsPath = "../../data/models/knownobjects/"
         let path =
             match typ with
-            | KnownObjectType.EiffelTower -> modelsPath + "aardvark/aardvark.obj"
             | KnownObjectType.Hammer      -> modelsPath + "hammer/Hammer.obj"
-            | KnownObjectType.Knife       -> modelsPath + "aardvark/aardvark.obj"
             | KnownObjectType.Person      -> modelsPath + "aardvark/aardvark.obj"
             | KnownObjectType.Chair       -> modelsPath + "chair/chair.dae"
             | KnownObjectType.Car         -> modelsPath + "aardvark/aardvark.obj"
-            | KnownObjectType.Coin        -> modelsPath + "coin/coin.dae"
-            | KnownObjectType.SoccerField -> modelsPath + "soccer/soccer.dae"
+            | KnownObjectType.Coin        -> modelsPath + "coinmodel/coin.obj"
+            | KnownObjectType.SoccerField -> modelsPath + "soccerfield/soccerfield.obj"
             | _                           -> modelsPath + "aardvark/aardvark.obj"
         
         let scale =
             match typ with
             | KnownObjectType.Hammer -> 1.0 / 50.0
-            | KnownObjectType.Coin   -> 1.0 / 2.6144
+            | KnownObjectType.Coin   -> 1.0
             | KnownObjectType.Chair  -> 1.0 / 7.5
             | _                      -> 1.0
         
@@ -55,8 +53,8 @@ module Loader =
             match typ with
             | KnownObjectType.Hammer      -> Trafo3d.RotationX(Constant.Pi) * Trafo3d.RotationZ(Constant.Pi * 0.5) * Trafo3d.Scale(1.0,1.0,-1.0)
             | KnownObjectType.Chair       -> Trafo3d.RotationX(Constant.Pi * 0.5)
-            | KnownObjectType.Coin        -> Trafo3d.Scale(-1.0,-1.0,-1.0) * Trafo3d.RotationY(Constant.Pi)
-            | KnownObjectType.SoccerField -> Trafo3d.RotationXInDegrees(90.0)
+            | KnownObjectType.Coin        -> Trafo3d.Scale(-1.0)
+            | KnownObjectType.SoccerField -> Trafo3d.Scale(0.5)
             | _                           -> Trafo3d.Scale(1.0,1.0,-1.0)
 
         let geom = IO.Loader.Assimp.load path
@@ -98,9 +96,9 @@ module Loader =
         | KnownObjectType.UnitSphere  -> 1.0
         | KnownObjectType.Hammer      -> 0.16
         | KnownObjectType.Chair       -> 0.62
-        | KnownObjectType.Coin        -> 0.016
+        | KnownObjectType.Coin        -> 0.025
         | KnownObjectType.SoccerField -> 0.0
-        | _ -> 0.2 // TODO: offset for other objects (when final 3d-models exist)
+        | _ -> 0.2
     
 module Sg =
     
