@@ -11,7 +11,7 @@ type KnownObjectType =
     | Hammer      = 3
     | Person      = 5
     | Chair       = 6
-    | Car         = 7
+    | Bus         = 7
     | Coin        = 8
     | SoccerField = 9
 

@@ -35,15 +35,15 @@ module Loader =
             | KnownObjectType.Hammer      -> modelsPath + "hammer/Hammer.obj"
             | KnownObjectType.Person      -> modelsPath + "silhouette/silhouette.obj"
             | KnownObjectType.Chair       -> modelsPath + "chair/chair.dae"
-            | KnownObjectType.Car         -> modelsPath + "aardvark/aardvark.obj"
+            | KnownObjectType.Bus         -> modelsPath + "bus/bus.obj"
             | KnownObjectType.Coin        -> modelsPath + "coinmodel/coin.obj"
             | KnownObjectType.SoccerField -> modelsPath + "soccerfield/soccerfield.obj"
             | _                           -> modelsPath + "aardvark/aardvark.obj"
         
         let scale =
             match typ with
-            | KnownObjectType.Hammer -> 1.0 / 50.0
-            | KnownObjectType.Chair  -> 1.0 / 7.5
+            | KnownObjectType.Hammer -> 0.022
+            | KnownObjectType.Chair  -> 0.086
             | _                      -> 1.0
         
         let scaleTrafo = Trafo3d.Scale(scale) |> Mod.constant
@@ -55,6 +55,7 @@ module Loader =
             | KnownObjectType.Coin        -> Trafo3d.Scale(-1.0)
             | KnownObjectType.SoccerField -> Trafo3d.Scale(0.5)
             | KnownObjectType.Person      -> Trafo3d.Scale(1.0)
+            | KnownObjectType.Bus         -> Trafo3d.RotationX(Constant.Pi * 0.5)
             | _                           -> Trafo3d.Scale(1.0,1.0,-1.0)
 
         let geom = IO.Loader.Assimp.load path
@@ -99,6 +100,7 @@ module Loader =
         | KnownObjectType.Coin        -> 0.006
         | KnownObjectType.SoccerField -> 0.0
         | KnownObjectType.Person      -> 0.88
+        | KnownObjectType.Bus         -> 1.0
         | _ -> 0.2
     
 module Sg =
