@@ -1,6 +1,5 @@
 ﻿// ----    run with AARDIUM    ----
-(*
-*)
+(**)
 open System
 
 open Aardvark.Base
@@ -48,8 +47,7 @@ let main argv =
     }
 
     0
-(*
-*)
+(**)
 
 
 // ----    run with CEF    ----
