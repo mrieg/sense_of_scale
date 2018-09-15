@@ -286,18 +286,26 @@ module App =
             if pts.Count < 3
             then m
             else
-                let vecs = pts |> PList.toList |> List.map( fun x -> x.pos ) |> Boxes.PCA.pca
+                let cm = pts |> PList.toList |> List.map( fun x -> x.pos ) |> Boxes.PCA.cov
+                let (vals, vecs) = Boxes.PCA.eig cm
                 let eig0 = vecs.[0]
                 let eig1 = vecs.[1]
                 let eig2 = vecs.[2]
 
+                let e =
+                    if vals.[0] < vals.[1] && vals.[0] < vals.[2]
+                    then eig0
+                    else if vals.[1] < vals.[0] && vals.[1] < vals.[2]
+                    then eig1
+                    else eig2
+
                 let p0 = pts.[0].pos
                 let p1 = pts.[1].pos
 
-                let v0 = p0 + (eig1*0.25)
-                let v1 = p1 + (eig1*0.25)
-                let v2 = p1 - (eig1*0.25)
-                let v3 = p0 - (eig1*0.25)
+                let v0 = p0 + (e*0.25)
+                let v1 = p1 + (e*0.25)
+                let v2 = p1 - (e*0.25)
+                let v3 = p0 - (e*0.25)
                 
                 let plane = Plane.setup v0 v1 v2 v3 (m.maxGroupId+1) 0 0
                 
