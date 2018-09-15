@@ -33,7 +33,7 @@ module Loader =
         let path =
             match typ with
             | KnownObjectType.Hammer      -> modelsPath + "hammer/Hammer.obj"
-            | KnownObjectType.Person      -> modelsPath + "aardvark/aardvark.obj"
+            | KnownObjectType.Person      -> modelsPath + "silhouette/silhouette.obj"
             | KnownObjectType.Chair       -> modelsPath + "chair/chair.dae"
             | KnownObjectType.Car         -> modelsPath + "aardvark/aardvark.obj"
             | KnownObjectType.Coin        -> modelsPath + "coinmodel/coin.obj"
@@ -43,7 +43,6 @@ module Loader =
         let scale =
             match typ with
             | KnownObjectType.Hammer -> 1.0 / 50.0
-            | KnownObjectType.Coin   -> 1.0
             | KnownObjectType.Chair  -> 1.0 / 7.5
             | _                      -> 1.0
         
@@ -55,6 +54,7 @@ module Loader =
             | KnownObjectType.Chair       -> Trafo3d.RotationX(Constant.Pi * 0.5)
             | KnownObjectType.Coin        -> Trafo3d.Scale(-1.0)
             | KnownObjectType.SoccerField -> Trafo3d.Scale(0.5)
+            | KnownObjectType.Person      -> Trafo3d.Scale(1.0)
             | _                           -> Trafo3d.Scale(1.0,1.0,-1.0)
 
         let geom = IO.Loader.Assimp.load path
@@ -96,8 +96,9 @@ module Loader =
         | KnownObjectType.UnitSphere  -> 1.0
         | KnownObjectType.Hammer      -> 0.16
         | KnownObjectType.Chair       -> 0.62
-        | KnownObjectType.Coin        -> 0.025
+        | KnownObjectType.Coin        -> 0.006
         | KnownObjectType.SoccerField -> 0.0
+        | KnownObjectType.Person      -> 0.88
         | _ -> 0.2
     
 module Sg =
@@ -132,3 +133,5 @@ module Sg =
         |> Sg.dynamic
         |> Sg.trafo m.trafo.previewTrafo
         |> Sg.uniform "Selected" m.selected
+        |> Sg.blendMode (BlendMode.Blend |> Mod.constant)
+        |> Sg.pass (RenderPass.after "transparent" RenderPassOrder.Arbitrary RenderPass.main)

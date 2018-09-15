@@ -17,7 +17,9 @@ module TranslatePlaneTrafoCtrl =
     let viewController (liftMessage : TrafoController.Action -> 'msg) (v : IMod<CameraView>) (m : MTransformation) =
         let arrow rot axis =
             let col =
-                m.hovered |> Mod.map2 (colorMatch axis) (m.grabbed |> Mod.map (Option.map ( fun p -> p.axis )))
+                let g : IMod<Option<PickPoint>> = m.grabbed
+                let p : IMod<Option<Axis>> =  (g |> Mod.map (Option.map ( fun (p:PickPoint) -> p.axis )))
+                m.hovered |> Mod.map2 (colorMatch axis) p
 
             Sg.cylinder tessellation col (Mod.constant cylinderRadius) (Mod.constant 1.0) 
             |> Sg.noEvents
@@ -32,11 +34,11 @@ module TranslatePlaneTrafoCtrl =
             |> Sg.withEvents [ 
                     Sg.onEnter        (fun _ ->   Hover axis)
                     Sg.onMouseDownEvt (fun evt -> Grab (evt.localRay, axis))
-                    Sg.onLeave        (fun _ ->   Unhover)
+                    Sg.onLeave        (fun _ ->   Unhover) 
                ]
                
-        let scaleTrafo (pos : IMod<V3d>) =
-            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.26) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+        let scaleTrafo pos =            
+            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.3) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
 
         let pickGraph =
             Sg.empty 
@@ -47,18 +49,32 @@ module TranslatePlaneTrafoCtrl =
                                 yield Global.onMouseMove (fun e -> MoveRay e.localRay)
                                 yield Global.onMouseUp   (fun _ -> Release)
                         }
-                    )
+                    )                
+                |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
                 |> Sg.trafo (TrafoController.pickingTrafo m)
                 |> Sg.map liftMessage
         
-        let sgList = [arrow (Trafo3d.RotationY 0.0) Axis.Z]//; arrow (Trafo3d.RotationY Constant.Pi) Axis.Z]
-
-        let scene =
-            Sg.ofList sgList
+        let arrowZ = arrow (Trafo3d.RotationY 0.0)              Axis.Z
+          
+        let currentTrafo : IMod<Trafo3d> =
+            adaptive {
+                let! mode = m.mode
+                match mode with
+                    | TrafoMode.Local -> 
+                        return! m.previewTrafo
+                    | TrafoMode.Global -> 
+                        let! a = m.previewTrafo
+                        return Trafo3d.Translation(a.Forward.TransformPos(V3d.Zero))
+                    | _ -> 
+                        return failwith ""
+            }
+        
+        let scene =      
+            arrowZ
             |> Sg.effect [ Shader.stableTrafo |> toEffect; Shader.hoverColor |> toEffect]
-            |> Sg.trafo (m.pose |> Pose.toTrafo' |> TrafoController.getTranslation |> scaleTrafo)
-            |> Sg.map liftMessage
-            |> Sg.trafo m.previewTrafo
+            |> Sg.trafo (currentTrafo |> TrafoController.getTranslation |> scaleTrafo)
+            |> Sg.trafo currentTrafo            
+            |> Sg.map liftMessage   
         
         Sg.ofList [pickGraph; scene]
 
