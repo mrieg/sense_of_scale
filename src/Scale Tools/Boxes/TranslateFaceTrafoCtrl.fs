@@ -34,8 +34,22 @@ module TranslateFaceTrafoCtrl =
                     Sg.onLeave        (fun _ ->   Unhover) 
                ]
                
-        let scaleTrafo pos =            
-            Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.3) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+        let scaleTrafo pos =
+            //Sg.computeInvariantScale' v (Mod.constant 0.1) pos (Mod.constant 0.3) (Mod.constant 60.0) |> Mod.map Trafo3d.Scale
+            adaptive {
+                let! p = pos
+                let! v = v
+                let near = 0.1
+                let hfov = 60.0
+                let hfov_rad = Conversion.RadiansFromDegrees(hfov)
+                
+                let dist = V3d.Distance(p, v.Location)
+                let size = dist / 6.0
+                return if size < 1.0 then 1.0 else size
+                //let wz = Fun.Tan(hfov_rad / 2.0) * near * size
+                //return ( wz / near ) * dist
+            }
+            |> Mod.map Trafo3d.Scale
 
         let pickGraph =
             Sg.empty 
