@@ -96,7 +96,7 @@ module Loader =
         | KnownObjectType.UnitCube    -> 0.5
         | KnownObjectType.UnitSphere  -> 1.0
         | KnownObjectType.Hammer      -> 0.16
-        | KnownObjectType.Chair       -> 0.62
+        | KnownObjectType.Chair       -> 0.45
         | KnownObjectType.Coin        -> 0.006
         | KnownObjectType.SoccerField -> 0.0
         | KnownObjectType.Person      -> 0.88
